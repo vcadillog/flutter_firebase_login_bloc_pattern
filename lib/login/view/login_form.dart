@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_firebase_login/login/login.dart';
 import 'package:flutter_firebase_login/sign_up/sign_up.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:form_inputs/form_inputs.dart';
 import 'package:formz/formz.dart';
 
 class LoginForm extends StatelessWidget {
@@ -104,11 +105,34 @@ class _PasswordInput extends StatefulWidget {
 
 class _PasswordInputState extends State<_PasswordInput> {
   bool viewPassword = false;
+  String errorText = '';
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<LoginCubit, LoginState>(
       buildWhen: (previous, current) => previous.password != current.password,
       builder: (context, state) {
+        switch (state.password.displayError) {
+          case PasswordValidationError.invalid:
+            errorText =
+                'Password must be at least 8 characters long and have one letter and a number.';
+          case PasswordValidationError.invalidLen:
+            errorText = 'Password must be at least 8 characters long.';
+          case PasswordValidationError.invalidLenLetter:
+            errorText =
+                'Password must be at least 8 characters long and one letter.';
+          case PasswordValidationError.invalidLenNumber:
+            errorText =
+                'Password must be at least 8 characters long and one number.';
+          case PasswordValidationError.invalidLetter:
+            errorText = 'Password must include at least one letter.';
+          case PasswordValidationError.invalidLetterNum:
+            errorText = 'Password must include at least one number and letter.';
+          case PasswordValidationError.invalidNumber:
+            errorText = 'Password must include at least one number.';
+          default:
+            errorText = '';
+        }
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15),
           child: TextField(
@@ -123,19 +147,19 @@ class _PasswordInputState extends State<_PasswordInput> {
               prefixIcon: const Icon(FontAwesomeIcons.lock, color: Colors.grey),
               suffixIcon: GestureDetector(
                 child: Icon(
-                    viewPassword
-                        ? FontAwesomeIcons.solidEye
-                        : FontAwesomeIcons.eye,
-                    color: Colors.grey),
+                  viewPassword
+                      ? FontAwesomeIcons.solidEye
+                      : FontAwesomeIcons.eye,
+                  color: Colors.grey,
+                ),
                 onTap: () => setState(() {
                   viewPassword = !viewPassword;
                 }),
               ),
               labelText: 'password',
               helperText: '',
-              errorText: state.password.displayError != null
-                  ? 'invalid password'
-                  : null,
+              errorText: errorText.isEmpty ? null : errorText,
+              errorMaxLines: 3,
             ),
           ),
         );
