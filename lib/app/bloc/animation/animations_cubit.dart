@@ -4,10 +4,22 @@ import 'package:equatable/equatable.dart';
 part 'animations_state.dart';
 
 class AnimationCubit extends Cubit<AnimationState> {
-  bool isLogin = false;
+  bool isLogin = true;
   AnimationCubit() : super(const AnimationState());
-  void signupPressed() {
+  void inProgress() {
+    emit(
+      const AnimationState(status: ButtonPushStatus.onChangeScreen),
+    );
+  }
+
+  void finishedAnimation() {
     isLogin = !isLogin;
-    emit(AnimationState(signUpPushed: isLogin));
+    emit(
+      AnimationState(
+        status: isLogin
+            ? ButtonPushStatus.loginScreen
+            : ButtonPushStatus.signupScreen,
+      ),
+    );
   }
 }

@@ -8,12 +8,23 @@ import 'package:formz/formz.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
-
   @override
   State<LoginForm> createState() => _LoginFormState();
 }
 
 class _LoginFormState extends State<LoginForm> {
+  double initialWidth = 0;
+  bool initialAnimFinished = false;
+  @override
+  void initState() {
+    Future.delayed(const Duration(milliseconds: 10)).then(
+      (_) => setState(() {
+        initialWidth = 500;
+      }),
+    );
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<LoginCubit, LoginState>(
@@ -28,49 +39,55 @@ class _LoginFormState extends State<LoginForm> {
             );
         }
       },
-      child: BlocBuilder<AnimationCubit, AnimationState>(
-        builder: (context, state) {
-          return Align(
-            alignment: const Alignment(0, -1 / 3),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    'assets/bloc_logo_small.png',
-                    height: 120,
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.all(30.0),
-                    child: Container(
-                      width: 350,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.all(Radius.circular(45)),
-                      ),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 22.5),
-                          _EmailInput(),
-                          const SizedBox(height: 8),
-                          _PasswordInput(),
-                          const SizedBox(height: 8),
-                          _LoginButton(),
-                          const SizedBox(height: 8),
-                          _SignUpButton(),
-                          const SizedBox(height: 4),
-                          _GoogleLoginButton(),
-                          const SizedBox(height: 25)
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+      child: Align(
+        alignment: const Alignment(0, -1 / 3),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/bloc_logo_small.png',
+                height: 120,
               ),
-            ),
-          );
-        },
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.all(30.0),
+                child: AnimatedContainer(
+                  onEnd: () => setState(() {
+                    initialAnimFinished = true;
+                  }),
+                  width: initialWidth,
+                  duration: const Duration(milliseconds: 300),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.all(Radius.circular(45)),
+                  ),
+                  child: !initialAnimFinished
+                      ? Container(
+                          height: 350,
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 22.5),
+                            _EmailInput(),
+                            const SizedBox(height: 8),
+                            _PasswordInput(),
+                            const SizedBox(height: 8),
+                            _DummyPasswordInput(),
+                            const SizedBox(height: 5),
+                            _LoginButton(),
+                            _SignUpButton(),
+                            const SizedBox(height: 4),
+                            _GoogleLoginButton(),
+                            const SizedBox(height: 22.5),
+                          ],
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -84,21 +101,24 @@ class _EmailInput extends StatelessWidget {
       builder: (context, state) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: TextField(
-            key: const Key('loginForm_emailInput_textField'),
-            onChanged: (email) =>
-                context.read<LoginCubit>().emailChanged(email),
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30.0),
+          child: SizedBox(
+            height: 80,
+            child: TextField(
+              key: const Key('loginForm_emailInput_textField'),
+              onChanged: (email) =>
+                  context.read<LoginCubit>().emailChanged(email),
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+                prefixIcon:
+                    const Icon(FontAwesomeIcons.solidUser, color: Colors.grey),
+                labelText: 'Email',
+                helperText: '',
+                errorText:
+                    state.email.displayError != null ? 'Invalid email' : null,
               ),
-              prefixIcon:
-                  const Icon(FontAwesomeIcons.solidUser, color: Colors.grey),
-              labelText: 'email',
-              helperText: '',
-              errorText:
-                  state.email.displayError != null ? 'Invalid email' : null,
             ),
           ),
         );
@@ -121,34 +141,57 @@ class _PasswordInputState extends State<_PasswordInput> {
       builder: (context, state) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: TextField(
-            key: const Key('loginForm_passwordInput_textField'),
-            onChanged: (password) =>
-                context.read<LoginCubit>().passwordChanged(password),
-            obscureText: !viewPassword,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30.0),
-              ),
-              prefixIcon: const Icon(FontAwesomeIcons.lock, color: Colors.grey),
-              suffixIcon: GestureDetector(
-                child: Icon(
-                  viewPassword
-                      ? FontAwesomeIcons.solidEye
-                      : FontAwesomeIcons.eye,
-                  color: Colors.grey,
+          child: SizedBox(
+            height: 80,
+            child: TextField(
+              key: const Key('loginForm_passwordInput_textField'),
+              onChanged: (password) =>
+                  context.read<LoginCubit>().passwordChanged(password),
+              obscureText: !viewPassword,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
                 ),
-                onTap: () => setState(() {
-                  viewPassword = !viewPassword;
-                }),
+                prefixIcon:
+                    const Icon(FontAwesomeIcons.lock, color: Colors.grey),
+                suffixIcon: GestureDetector(
+                  child: Icon(
+                    viewPassword
+                        ? FontAwesomeIcons.solidEye
+                        : FontAwesomeIcons.eye,
+                    color: Colors.grey,
+                  ),
+                  onTap: () => setState(() {
+                    viewPassword = !viewPassword;
+                  }),
+                ),
+                labelText: 'Password',
+                helperText: '',
+                errorText: state.password.displayError != null
+                    ? 'Invalid password'
+                    : null,
+                errorMaxLines: 3,
               ),
-              labelText: 'password',
-              helperText: '',
-              errorText: state.password.displayError != null
-                  ? 'Invalid password'
-                  : null,
-              errorMaxLines: 3,
             ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _DummyPasswordInput extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AnimationCubit, AnimationState>(
+      builder: (context, state) {
+        return AnimatedContainer(
+          curve: Curves.bounceOut,
+          height: state.status == ButtonPushStatus.onChangeScreen ? 80 : 0,
+          onEnd: () => context.read<AnimationCubit>().finishedAnimation(),
+          duration: const Duration(seconds: 1),
+          child: Container(
+            color: const Color.fromARGB(255, 53, 104, 197),
           ),
         );
       },
@@ -159,30 +202,29 @@ class _PasswordInputState extends State<_PasswordInput> {
 class _LoginButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Builder(
-      builder: (context) {
-        final stateLogin = context.watch<LoginCubit>().state;
-        final stateAnimation =
-            context.watch<AnimationCubit>().state.signUpPushed;
-        return stateLogin.status.isInProgress
+    final theme = Theme.of(context);
+    return BlocBuilder<LoginCubit, LoginState>(
+      builder: (context, state) {
+        return state.status.isInProgress
             ? const CircularProgressIndicator()
-            : TextButton(
-                key: const Key('loginForm_continue_raisedButton'),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+            : SizedBox(
+                height: 40,
+                child: TextButton(
+                  key: const Key('loginForm_continue_raisedButton'),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    backgroundColor: const Color(0xFFFFD600),
                   ),
-                  backgroundColor: stateAnimation
-                      ? Colors.transparent
-                      : const Color(0xFFFFD600),
-                ),
-                onPressed: stateLogin.isValid
-                    ? () => context.read<LoginCubit>().logInWithCredentials()
-                    : () => (),
-                child: Text(
-                  'LOGIN',
-                  style: TextStyle(
-                    color: stateLogin.isValid ? Colors.purple : Colors.grey,
+                  onPressed: state.isValid
+                      ? () => context.read<LoginCubit>().logInWithCredentials()
+                      : () => (),
+                  child: Text(
+                    'LOGIN',
+                    style: TextStyle(
+                      color: state.isValid ? theme.primaryColor : Colors.grey,
+                    ),
                   ),
                 ),
               );
@@ -195,26 +237,37 @@ class _GoogleLoginButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      child: ElevatedButton.icon(
-        key: const Key('loginForm_googleLogin_raisedButton'),
-        label: const Text(
-          'SIGN IN WITH GOOGLE',
-          style: TextStyle(color: Colors.white),
-        ),
-        style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+    return BlocBuilder<AnimationCubit, AnimationState>(
+      builder: (context, state) {
+        return AnimatedContainer(
+          curve: Curves.bounceOut,
+          height: state.status == ButtonPushStatus.onChangeScreen ? 0 : 40,
+          duration: const Duration(seconds: 1),
+          onEnd: () => context.read<AnimationCubit>().finishedAnimation(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: ElevatedButton.icon(
+              key: const Key('loginForm_googleLogin_raisedButton'),
+              label: const Text(
+                'SIGN IN WITH GOOGLE',
+                style: TextStyle(color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                backgroundColor: theme.colorScheme.secondary,
+              ),
+              icon: Icon(
+                FontAwesomeIcons.google,
+                color: Colors.white,
+                size: state.status == ButtonPushStatus.onChangeScreen ? 0 : 20,
+              ),
+              onPressed: () => context.read<LoginCubit>().logInWithGoogle(),
+            ),
           ),
-          backgroundColor: theme.colorScheme.secondary,
-        ),
-        icon: const Icon(
-          FontAwesomeIcons.google,
-          color: Colors.white,
-        ),
-        onPressed: () => context.read<LoginCubit>().logInWithGoogle(),
-      ),
+        );
+      },
     );
   }
 }
@@ -225,32 +278,33 @@ class _SignUpButton extends StatelessWidget {
     final theme = Theme.of(context);
     return BlocBuilder<AnimationCubit, AnimationState>(
       builder: (context, state) {
-        return TextButton(
-          key: const Key('loginForm_createAccount_flatButton'),
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            // backgroundColor: const Color(0xFFFFD600),
-            backgroundColor: state.signUpPushed
-                ? const Color(0xFFFFD600)
-                : Colors.transparent,
-          ),
-          onPressed: () {
-            context.read<AnimationCubit>().signupPressed();
-            FocusScope.of(context).unfocus();
-            Navigator.of(context).push<void>(
-              PageRouteBuilder(
-                pageBuilder: (context, animation1, animation2) =>
-                    const SignUpPage(),
-                transitionDuration: Duration.zero,
-                reverseTransitionDuration: Duration.zero,
+        return SizedBox(
+          height: 40,
+          child: TextButton(
+            key: const Key('loginForm_createAccount_flatButton'),
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
               ),
-            );
-          },
-          child: Text(
-            'SIGNUP',
-            style: TextStyle(color: theme.primaryColor),
+              // backgroundColor: const Color(0xFFFFD600),
+              backgroundColor: Colors.transparent,
+            ),
+            onPressed: () {
+              FocusScope.of(context).unfocus();
+              context.read<AnimationCubit>().inProgress();
+              Navigator.of(context).push<void>(
+                PageRouteBuilder(
+                  pageBuilder: (context, animation1, animation2) =>
+                      const SignUpPage(),
+                  transitionDuration: Duration.zero,
+                  reverseTransitionDuration: Duration.zero,
+                ),
+              );
+            },
+            child: Text(
+              'SIGN UP',
+              style: TextStyle(color: theme.primaryColor),
+            ),
           ),
         );
       },

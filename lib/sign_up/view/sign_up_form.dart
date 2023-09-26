@@ -42,20 +42,25 @@ class SignUpForm extends StatelessWidget {
                     color: Colors.white,
                     borderRadius: BorderRadius.all(Radius.circular(45)),
                   ),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 22.5),
-                      _EmailInput(),
-                      const SizedBox(height: 8),
-                      _PasswordInput(),
-                      const SizedBox(height: 8),
-                      _ConfirmPasswordInput(),
-                      const SizedBox(height: 8),
-                      _SignUpButton(),
-                      const SizedBox(height: 8),
-                      _LoginButton(),
-                      const SizedBox(height: 25),
-                    ],
+                  child: BlocBuilder<AnimationCubit, AnimationState>(
+                    builder: (context, state) {
+                      return Column(
+                        children: [
+                          const SizedBox(height: 22.5),
+                          _EmailInput(),
+                          const SizedBox(height: 8),
+                          _PasswordInput(),
+                          const SizedBox(height: 8),
+                          _ConfirmPasswordInput(),
+                          const SizedBox(height: 5),
+                          _SignUpButton(),
+                          _LoginButton(),
+                          const SizedBox(height: 4),
+                          _GoogleLoginButton(),
+                          const SizedBox(height: 22.5),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -71,26 +76,27 @@ class _SignUpButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return BlocBuilder<AnimationCubit, AnimationState>(
+    return BlocBuilder<SignUpCubit, SignUpState>(
       builder: (context, state) {
-        return TextButton(
-          key: const Key('loginForm_createAccount_flatButton'),
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
+        return SizedBox(
+          height: 40,
+          child: TextButton(
+            key: const Key('loginForm_createAccount_flatButton'),
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              backgroundColor: const Color(0xFFFFD600),
             ),
-            // backgroundColor: const Color(0xFFFFD600),
-            backgroundColor: state.signUpPushed
-                ? const Color(0xFFFFD600)
-                : Colors.transparent,
-          ),
-          // onPressed: () => Navigator.of(context).push<void>(SignUpPage.route()),
-          onPressed: () => state.signUpPushed
-              ? null
-              : context.read<AnimationCubit>().signupPressed(),
-          child: Text(
-            'SIGNUP',
-            style: TextStyle(color: theme.primaryColor),
+            onPressed: () => state.isValid
+                ? () => context.read<SignUpCubit>().signUpFormSubmitted()
+                : null,
+            child: Text(
+              'SIGN UP',
+              style: TextStyle(
+                color: state.isValid ? theme.primaryColor : Colors.grey,
+              ),
+            ),
           ),
         );
       },
@@ -106,21 +112,24 @@ class _EmailInput extends StatelessWidget {
       builder: (context, state) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: TextField(
-            key: const Key('signUpForm_emailInput_textField'),
-            onChanged: (email) =>
-                context.read<SignUpCubit>().emailChanged(email),
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30.0),
+          child: SizedBox(
+            height: 80,
+            child: TextField(
+              key: const Key('signUpForm_emailInput_textField'),
+              onChanged: (email) =>
+                  context.read<SignUpCubit>().emailChanged(email),
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+                prefixIcon:
+                    const Icon(FontAwesomeIcons.solidUser, color: Colors.grey),
+                labelText: 'Email',
+                helperText: '',
+                errorText:
+                    state.email.displayError != null ? 'Invalid email' : null,
               ),
-              prefixIcon:
-                  const Icon(FontAwesomeIcons.solidUser, color: Colors.grey),
-              labelText: 'email',
-              helperText: '',
-              errorText:
-                  state.email.displayError != null ? 'Invalid email' : null,
             ),
           ),
         );
@@ -168,31 +177,35 @@ class _PasswordSInputState extends State<_PasswordInput> {
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: TextField(
-            key: const Key('signUpForm_passwordInput_textField'),
-            onChanged: (password) =>
-                context.read<SignUpCubit>().passwordChanged(password),
-            obscureText: !viewPassword,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30.0),
-              ),
-              prefixIcon: const Icon(FontAwesomeIcons.lock, color: Colors.grey),
-              suffixIcon: GestureDetector(
-                child: Icon(
-                  viewPassword
-                      ? FontAwesomeIcons.solidEye
-                      : FontAwesomeIcons.eye,
-                  color: Colors.grey,
+          child: SizedBox(
+            height: 80,
+            child: TextField(
+              key: const Key('signUpForm_passwordInput_textField'),
+              onChanged: (password) =>
+                  context.read<SignUpCubit>().passwordChanged(password),
+              obscureText: !viewPassword,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
                 ),
-                onTap: () => setState(() {
-                  viewPassword = !viewPassword;
-                }),
+                prefixIcon:
+                    const Icon(FontAwesomeIcons.lock, color: Colors.grey),
+                suffixIcon: GestureDetector(
+                  child: Icon(
+                    viewPassword
+                        ? FontAwesomeIcons.solidEye
+                        : FontAwesomeIcons.eye,
+                    color: Colors.grey,
+                  ),
+                  onTap: () => setState(() {
+                    viewPassword = !viewPassword;
+                  }),
+                ),
+                labelText: 'Password',
+                helperText: '',
+                errorText: errorText.isEmpty ? null : errorText,
+                errorMaxLines: 3,
               ),
-              labelText: 'password',
-              helperText: '',
-              errorText: errorText.isEmpty ? null : errorText,
-              errorMaxLines: 3,
             ),
           ),
         );
@@ -209,46 +222,125 @@ class _ConfirmPasswordInput extends StatefulWidget {
 class _ConfirmPasswordInputState extends State<_ConfirmPasswordInput> {
   bool viewPassword = false;
   String errorText = '';
+  double height = 0;
+  bool showIcons = false;
+  @override
+  void initState() {
+    Future.delayed(const Duration(milliseconds: 10)).then(
+      (_) => setState(() {
+        height = 80;
+      }),
+    );
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<SignUpCubit, SignUpState>(
-      buildWhen: (previous, current) =>
-          previous.password != current.password ||
-          previous.confirmedPassword != current.confirmedPassword,
       builder: (context, state) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: TextField(
-            key: const Key('signUpForm_confirmedPasswordInput_textField'),
-            onChanged: (confirmPassword) => context
-                .read<SignUpCubit>()
-                .confirmedPasswordChanged(confirmPassword),
-            obscureText: !viewPassword,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30.0),
-              ),
-              prefixIcon: const Icon(FontAwesomeIcons.lock, color: Colors.grey),
-              suffixIcon: GestureDetector(
-                child: Icon(
-                  viewPassword
-                      ? FontAwesomeIcons.solidEye
-                      : FontAwesomeIcons.eye,
-                  color: Colors.grey,
+        return AnimatedContainer(
+          curve: Curves.bounceOut,
+          height: height,
+          duration: const Duration(seconds: 1),
+          onEnd: () => setState(() {
+            showIcons = true;
+          }),
+          child: !showIcons
+              ? Container(
+                  color: const Color.fromARGB(255, 53, 104, 197),
+                )
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: TextField(
+                    key: const Key(
+                        'signUpForm_confirmedPasswordInput_textField'),
+                    onChanged: (confirmPassword) => context
+                        .read<SignUpCubit>()
+                        .confirmedPasswordChanged(confirmPassword),
+                    obscureText: !viewPassword,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                      prefixIcon: showIcons
+                          ? const Icon(FontAwesomeIcons.lock,
+                              color: Colors.grey)
+                          : null,
+                      suffixIcon: showIcons
+                          ? GestureDetector(
+                              child: Icon(
+                                viewPassword
+                                    ? FontAwesomeIcons.solidEye
+                                    : FontAwesomeIcons.eye,
+                                color: Colors.grey,
+                              ),
+                              onTap: () => setState(() {
+                                viewPassword = !viewPassword;
+                              }),
+                            )
+                          : null,
+                      labelText: 'Confirm password',
+                      helperText: '',
+                      errorText: state.confirmedPassword.displayError != null
+                          ? 'Passwords do not match'
+                          : null,
+                    ),
+                  ),
                 ),
-                onTap: () => setState(() {
-                  viewPassword = !viewPassword;
-                }),
-              ),
-              labelText: 'Confirm password',
-              helperText: '',
-              errorText: state.confirmedPassword.displayError != null
-                  ? 'passwords do not match'
-                  : null,
-            ),
-          ),
         );
       },
+    );
+  }
+}
+
+class _GoogleLoginButton extends StatefulWidget {
+  @override
+  State<_GoogleLoginButton> createState() => _GoogleLoginButtonState();
+}
+
+class _GoogleLoginButtonState extends State<_GoogleLoginButton> {
+  double height = 40;
+  double iconHeight = 25;
+  @override
+  void initState() {
+    Future.delayed(const Duration(milliseconds: 10)).then(
+      (_) => setState(() {
+        height = 0;
+        iconHeight = 0;
+      }),
+    );
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AnimatedContainer(
+      curve: Curves.bounceOut,
+      height: height,
+      duration: const Duration(seconds: 1),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        child: ElevatedButton.icon(
+          key: const Key('loginForm_googleLogin_raisedButton'),
+          label: const Text(
+            'SIGN IN WITH GOOGLE',
+            style: TextStyle(color: Colors.white),
+          ),
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            backgroundColor: theme.colorScheme.secondary,
+          ),
+          icon: Icon(
+            FontAwesomeIcons.google,
+            color: Colors.white,
+            size: iconHeight,
+          ),
+          onPressed: () => (),
+        ),
+      ),
     );
   }
 }
@@ -258,21 +350,24 @@ class _LoginButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AnimationCubit, AnimationState>(
       builder: (context, state) {
-        return TextButton(
-          key: const Key('loginForm_continue_raisedButton'),
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
+        return SizedBox(
+          height: 40,
+          child: TextButton(
+            key: const Key('loginForm_continue_raisedButton'),
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              backgroundColor: state.status != ButtonPushStatus.loginScreen
+                  ? Colors.transparent
+                  : const Color(0xFFFFD600),
             ),
-            backgroundColor: state.signUpPushed
-                ? Colors.transparent
-                : const Color(0xFFFFD600),
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<AnimationCubit>().inProgress();
+            },
+            child: const Text('LOGIN'),
           ),
-          onPressed: () {
-            context.read<AnimationCubit>().signupPressed();
-            Navigator.pop(context);
-          },
-          child: const Text('LOGIN'),
         );
       },
     );
