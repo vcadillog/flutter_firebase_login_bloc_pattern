@@ -4,7 +4,6 @@ enum ButtonPushStatus {
   loginScreen,
   signupScreen,
   onChangeScreen,
-  onFinished,
 }
 
 final class AnimationState extends Equatable {

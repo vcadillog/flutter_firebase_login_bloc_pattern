@@ -61,6 +61,17 @@ class SignUpCubit extends Cubit<SignUpState> {
     );
   }
 
+  void resetForms() {
+    emit(
+      state.copyWith(
+        email: const Email.pure(),
+        password: const Password.pure(),
+        confirmedPassword: const ConfirmedPassword.pure(),
+        isValid: false,
+      ),
+    );
+  }
+
   Future<void> signUpFormSubmitted() async {
     if (!state.isValid) return;
     emit(state.copyWith(status: FormzSubmissionStatus.inProgress));
