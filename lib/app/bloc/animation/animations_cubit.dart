@@ -6,23 +6,31 @@ part 'animations_state.dart';
 class AnimationCubit extends Cubit<AnimationState> {
   AnimationCubit() : super(const AnimationState());
 
-  void inProgress() {
+  void toSignup() {
     emit(
-      const AnimationState(status: ButtonPushStatus.onChangeScreen),
+      const AnimationState(status: ButtonPushStatus.signupChange),
     );
   }
 
-  void toSignup() {
+  void onSingupEnd() {
     emit(
       const AnimationState(
-        status: ButtonPushStatus.signupScreen,
+        status: ButtonPushStatus.signupEnd,
       ),
     );
   }
 
   void toLogin() {
     emit(
-      const AnimationState(),
+      const AnimationState(status: ButtonPushStatus.loginChange),
+    );
+  }
+
+  void onLoginEnd() {
+    emit(
+      const AnimationState(
+        status: ButtonPushStatus.loginEnd,
+      ),
     );
   }
 }

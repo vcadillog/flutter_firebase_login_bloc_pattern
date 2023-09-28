@@ -40,23 +40,30 @@ class _SignUpButton extends StatelessWidget {
     final theme = Theme.of(context);
     return SizedBox(
       height: 40,
-      child: TextButton(
-        key: const Key('loginForm_createAccount_flatButton'),
-        style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          backgroundColor: Colors.transparent,
-        ),
-        onPressed: () {
-          FocusScope.of(context).unfocus();
-          context.read<LoginCubit>().resetForms();
-          context.read<AnimationCubit>().toSignup();
+      child: BlocBuilder<AnimationCubit, AnimationState>(
+        builder: (context, state) {
+          return TextButton(
+            key: const Key('loginForm_createAccount_flatButton'),
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              backgroundColor: Colors.transparent,
+            ),
+            onPressed: () {
+              if (state.status == ButtonPushStatus.loginEnd ||
+                  state.status == ButtonPushStatus.initialScreen) {
+                FocusScope.of(context).unfocus();
+                context.read<LoginCubit>().resetForms();
+                context.read<AnimationCubit>().toSignup();
+              }
+            },
+            child: Text(
+              'SIGN UP',
+              style: TextStyle(color: theme.primaryColor),
+            ),
+          );
         },
-        child: Text(
-          'SIGN UP',
-          style: TextStyle(color: theme.primaryColor),
-        ),
       ),
     );
   }
@@ -116,13 +123,14 @@ class _PasswordInputState extends State<_PasswordInput> {
 }
 
 class _GoogleLoginButton extends StatelessWidget {
+  final bool enableTap;
+  const _GoogleLoginButton({this.enableTap = true});
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return AnimatedContainer(
-      curve: Curves.bounceOut,
+    return SizedBox(
       height: 40,
-      duration: const Duration(seconds: 1),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 15),
         child: ElevatedButton.icon(
@@ -142,7 +150,11 @@ class _GoogleLoginButton extends StatelessWidget {
             color: Colors.white,
             size: 20,
           ),
-          onPressed: () => context.read<LoginCubit>().logInWithGoogle(),
+          onPressed: () {
+            if (enableTap) {
+              context.read<LoginCubit>().logInWithGoogle();
+            }
+          },
         ),
       ),
     );
@@ -179,6 +191,32 @@ class _LoginButton extends StatelessWidget {
                 ),
               );
       },
+    );
+  }
+}
+
+class _DummyConfirmPasswordInput extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 8, 15, 0),
+      child: TextField(
+        decoration: InputDecoration(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30.0),
+          ),
+          prefixIcon: const Icon(
+            FontAwesomeIcons.lock,
+            color: Colors.grey,
+          ),
+          suffixIcon: const Icon(
+            FontAwesomeIcons.eye,
+            color: Colors.grey,
+          ),
+          labelText: 'Confirm password',
+          helperText: '',
+        ),
+      ),
     );
   }
 }

@@ -101,7 +101,9 @@ class _EmailGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AnimationCubit, AnimationState>(
       builder: (context, state) {
-        return state.status == ButtonPushStatus.loginScreen
+        return state.status == ButtonPushStatus.loginChange ||
+                state.status == ButtonPushStatus.loginEnd ||
+                state.status == ButtonPushStatus.initialScreen
             ? _EmailInput()
             : _EmailAltInput();
       },
@@ -114,7 +116,9 @@ class _PasswordGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AnimationCubit, AnimationState>(
       builder: (context, state) {
-        return state.status == ButtonPushStatus.loginScreen
+        return state.status == ButtonPushStatus.loginChange ||
+                state.status == ButtonPushStatus.loginEnd ||
+                state.status == ButtonPushStatus.initialScreen
             ? _PasswordInput()
             : _PasswordAltInput();
       },
@@ -127,9 +131,21 @@ class _ConfirmPasswordGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AnimationCubit, AnimationState>(
       builder: (context, state) {
-        return state.status == ButtonPushStatus.loginScreen
-            ? Container()
-            : _ConfirmPasswordInput();
+        switch (state.status) {
+          case ButtonPushStatus.initialScreen || ButtonPushStatus.loginEnd:
+            return Container();
+          case ButtonPushStatus.loginChange:
+            return ColoredBox(
+              color: Colors.red,
+              child: _OutFieldAnimation(
+                boxHeight: 88,
+                onEnd: context.read<AnimationCubit>().onLoginEnd,
+                inputWidget: _DummyConfirmPasswordInput(),
+              ),
+            );
+          case ButtonPushStatus.signupChange || ButtonPushStatus.signupEnd:
+            return _ConfirmPasswordInput();
+        }
       },
     );
   }
@@ -140,7 +156,9 @@ class _LoginButtonGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AnimationCubit, AnimationState>(
       builder: (context, state) {
-        return state.status == ButtonPushStatus.loginScreen
+        return state.status == ButtonPushStatus.loginChange ||
+                state.status == ButtonPushStatus.loginEnd ||
+                state.status == ButtonPushStatus.initialScreen
             ? _LoginButton()
             : _SignUpAltButton();
       },
@@ -153,7 +171,9 @@ class _SignUpButtonGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AnimationCubit, AnimationState>(
       builder: (context, state) {
-        return state.status == ButtonPushStatus.loginScreen
+        return state.status == ButtonPushStatus.loginChange ||
+                state.status == ButtonPushStatus.loginEnd ||
+                state.status == ButtonPushStatus.initialScreen
             ? _SignUpButton()
             : _LoginAltButton();
       },
@@ -166,10 +186,161 @@ class _GoogleLoginGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AnimationCubit, AnimationState>(
       builder: (context, state) {
-        return state.status == ButtonPushStatus.loginScreen
-            ? _GoogleLoginButton()
-            : _DummyGoogleLoginButton();
+        switch (state.status) {
+          case ButtonPushStatus.initialScreen || ButtonPushStatus.loginEnd:
+            return const _GoogleLoginButton();
+          case ButtonPushStatus.loginChange:
+            return const _InFieldAnimation(
+              boxHeight: 40,
+              colorEnd: Colors.transparent,
+              inputWidget: _GoogleLoginButton(
+                enableTap: false,
+              ),
+            );
+          case ButtonPushStatus.signupChange:
+            return const _OutFieldAnimation(
+              boxHeight: 40,
+              colorEnd: Colors.transparent,
+              inputWidget: _GoogleLoginButton(
+                enableTap: false,
+              ),
+            );
+          case ButtonPushStatus.signupEnd:
+            return Container();
+        }
       },
+    );
+  }
+}
+
+class _InFieldAnimation extends StatefulWidget {
+  final Widget inputWidget;
+  final double boxHeight;
+  final VoidCallback? onEnd;
+  final Color colorEnd;
+  const _InFieldAnimation({
+    required this.inputWidget,
+    required this.boxHeight,
+    this.colorEnd = Colors.white,
+    this.onEnd,
+  });
+  @override
+  State<_InFieldAnimation> createState() => _InFieldAnimationState();
+}
+
+class _InFieldAnimationState extends State<_InFieldAnimation> {
+  double height = 0;
+  double offset = 1;
+  bool inEndAnimation = false;
+  Color color = Colors.cyan;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(Duration.zero).then(
+      (value) => setState(() {
+        height = widget.boxHeight;
+        Future.delayed(const Duration(seconds: 1)).then(
+          (value) => setState(() {
+            inEndAnimation = true;
+            offset = 0;
+          }),
+        );
+      }),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: color,
+      width: double.infinity,
+      child: AnimatedContainer(
+        curve: Curves.bounceOut,
+        height: height,
+        duration: const Duration(seconds: 1),
+        child: AnimatedSlide(
+          duration: const Duration(milliseconds: 500),
+          offset: Offset(offset, 0),
+          curve: Curves.easeOutQuint,
+          onEnd: () {
+            widget.onEnd!();
+            setState(() {
+              color = widget.colorEnd;
+            });
+          },
+          child: inEndAnimation
+              ? ColoredBox(
+                  color: widget.colorEnd,
+                  child: Center(child: widget.inputWidget),
+                )
+              : Container(),
+        ),
+      ),
+    );
+  }
+}
+
+class _OutFieldAnimation extends StatefulWidget {
+  final Widget inputWidget;
+  final double boxHeight;
+  final VoidCallback? onEnd;
+  final Color colorEnd;
+  const _OutFieldAnimation({
+    required this.inputWidget,
+    required this.boxHeight,
+    this.colorEnd = Colors.white,
+    this.onEnd,
+  });
+  @override
+  State<_OutFieldAnimation> createState() => _OutFieldAnimationState();
+}
+
+class _OutFieldAnimationState extends State<_OutFieldAnimation> {
+  late double height;
+  double offset = 0;
+  bool inEndAnimation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    height = widget.boxHeight;
+    Future.delayed(Duration.zero).then(
+      (value) => setState(() {
+        offset = 1;
+        Future.delayed(const Duration(milliseconds: 500)).then(
+          (value) => setState(() {
+            inEndAnimation = true;
+            height = 0;
+          }),
+        );
+      }),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.red,
+      width: double.infinity,
+      child: AnimatedSlide(
+        duration: const Duration(milliseconds: 500),
+        offset: Offset(offset, 0),
+        curve: Curves.easeOutQuint,
+        child: ColoredBox(
+          color: inEndAnimation ? Colors.transparent : widget.colorEnd,
+          child: AnimatedContainer(
+            curve: Curves.bounceOut,
+            height: height,
+            duration: const Duration(seconds: 1),
+            onEnd: () => widget.onEnd!(),
+            child: inEndAnimation
+                ? Container()
+                : Center(child: widget.inputWidget),
+          ),
+        ),
+      ),
     );
   }
 }
