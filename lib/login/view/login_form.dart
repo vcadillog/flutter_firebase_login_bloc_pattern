@@ -1,3 +1,4 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_firebase_login/app/bloc/animation/animations_cubit.dart';
@@ -6,7 +7,7 @@ import 'package:flutter_firebase_login/sign_up/sign_up.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:form_inputs/form_inputs.dart';
 import 'package:formz/formz.dart';
-
+part 'animations/animations.dart';
 part 'screens/login_group.dart';
 part 'screens/sign_up_group.dart';
 
@@ -79,8 +80,7 @@ class _LoginFormState extends State<LoginForm> {
                             _PasswordGroup(),
                             _ConfirmPasswordGroup(),
                             const SizedBox(height: 5),
-                            _LoginButtonGroup(),
-                            _SignUpButtonGroup(),
+                            _NavigationButtons(),
                             const SizedBox(height: 4),
                             _GoogleLoginGroup(),
                             const SizedBox(height: 22.5),
@@ -135,15 +135,20 @@ class _ConfirmPasswordGroup extends StatelessWidget {
           case ButtonPushStatus.initialScreen || ButtonPushStatus.loginEnd:
             return Container();
           case ButtonPushStatus.loginChange:
-            return ColoredBox(
-              color: Colors.red,
-              child: _OutFieldAnimation(
-                boxHeight: 88,
-                onEnd: context.read<AnimationCubit>().onLoginEnd,
-                inputWidget: _DummyConfirmPasswordInput(),
-              ),
+            return _OutFieldAnimation(
+              isReverse: true,
+              boxHeight: 88,
+              onEnd: context.read<AnimationCubit>().onLoginEnd,
+              inputWidget: _DummyConfirmPasswordInput(),
             );
-          case ButtonPushStatus.signupChange || ButtonPushStatus.signupEnd:
+          case ButtonPushStatus.signupChange:
+            return _InFieldAnimation(
+              boxHeight: 88,
+              onEnd: context.read<AnimationCubit>().onSingupEnd,
+              inputWidget: _ConfirmPasswordInput(),
+            );
+
+          case ButtonPushStatus.signupEnd:
             return _ConfirmPasswordInput();
         }
       },
@@ -151,31 +156,75 @@ class _ConfirmPasswordGroup extends StatelessWidget {
   }
 }
 
-class _LoginButtonGroup extends StatelessWidget {
+class _NavigationButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AnimationCubit, AnimationState>(
       builder: (context, state) {
-        return state.status == ButtonPushStatus.loginChange ||
-                state.status == ButtonPushStatus.loginEnd ||
-                state.status == ButtonPushStatus.initialScreen
-            ? _LoginButton()
-            : _SignUpAltButton();
-      },
-    );
-  }
-}
-
-class _SignUpButtonGroup extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AnimationCubit, AnimationState>(
-      builder: (context, state) {
-        return state.status == ButtonPushStatus.loginChange ||
-                state.status == ButtonPushStatus.loginEnd ||
-                state.status == ButtonPushStatus.initialScreen
-            ? _SignUpButton()
-            : _LoginAltButton();
+        switch (state.status) {
+          case ButtonPushStatus.initialScreen || ButtonPushStatus.loginEnd:
+            void allowTap() {
+              FocusScope.of(context).unfocus();
+              context.read<LoginCubit>().resetForms();
+              context.read<AnimationCubit>().toSignup();
+            }
+            return Column(
+              children: [
+                const _LoginButton(
+                  textWidget: Text('LOG IN'),
+                ),
+                _SignUpButton(
+                  textWidget: const Text('SIGN UP'),
+                  onTap: allowTap,
+                ),
+              ],
+            );
+          case ButtonPushStatus.signupEnd:
+            void allowTap() {
+              FocusScope.of(context).unfocus();
+              context.read<SignUpCubit>().resetForms();
+              context.read<AnimationCubit>().toLogin();
+            }
+            return Column(
+              children: [
+                const _SignUpButton(
+                  textWidget: Text('SIGN UP'),
+                  color: Color(0xFFFFD600),
+                ),
+                _LoginButton(
+                  textWidget: const Text('LOG IN'),
+                  color: Colors.transparent,
+                  onTap: allowTap,
+                ),
+              ],
+            );
+          case ButtonPushStatus.signupChange:
+            return const Column(
+              children: [
+                _LoginButton(
+                  textWidget: _TextRotation(),
+                ),
+                _SignUpButton(
+                  textWidget: _TextRotation(
+                    reversedText: true,
+                  ),
+                ),
+              ],
+            );
+          case ButtonPushStatus.loginChange:
+            return const Column(
+              children: [
+                _LoginButton(
+                  textWidget: _TextRotation(
+                    reversedText: true,
+                  ),
+                ),
+                _SignUpButton(
+                  textWidget: _TextRotation(),
+                ),
+              ],
+            );
+        }
       },
     );
   }
@@ -199,6 +248,7 @@ class _GoogleLoginGroup extends StatelessWidget {
             );
           case ButtonPushStatus.signupChange:
             return const _OutFieldAnimation(
+              isReverse: true,
               boxHeight: 40,
               colorEnd: Colors.transparent,
               inputWidget: _GoogleLoginButton(
@@ -209,138 +259,6 @@ class _GoogleLoginGroup extends StatelessWidget {
             return Container();
         }
       },
-    );
-  }
-}
-
-class _InFieldAnimation extends StatefulWidget {
-  final Widget inputWidget;
-  final double boxHeight;
-  final VoidCallback? onEnd;
-  final Color colorEnd;
-  const _InFieldAnimation({
-    required this.inputWidget,
-    required this.boxHeight,
-    this.colorEnd = Colors.white,
-    this.onEnd,
-  });
-  @override
-  State<_InFieldAnimation> createState() => _InFieldAnimationState();
-}
-
-class _InFieldAnimationState extends State<_InFieldAnimation> {
-  double height = 0;
-  double offset = 1;
-  bool inEndAnimation = false;
-  Color color = Colors.cyan;
-
-  @override
-  void initState() {
-    super.initState();
-
-    Future.delayed(Duration.zero).then(
-      (value) => setState(() {
-        height = widget.boxHeight;
-        Future.delayed(const Duration(seconds: 1)).then(
-          (value) => setState(() {
-            inEndAnimation = true;
-            offset = 0;
-          }),
-        );
-      }),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: color,
-      width: double.infinity,
-      child: AnimatedContainer(
-        curve: Curves.bounceOut,
-        height: height,
-        duration: const Duration(seconds: 1),
-        child: AnimatedSlide(
-          duration: const Duration(milliseconds: 500),
-          offset: Offset(offset, 0),
-          curve: Curves.easeOutQuint,
-          onEnd: () {
-            widget.onEnd!();
-            setState(() {
-              color = widget.colorEnd;
-            });
-          },
-          child: inEndAnimation
-              ? ColoredBox(
-                  color: widget.colorEnd,
-                  child: Center(child: widget.inputWidget),
-                )
-              : Container(),
-        ),
-      ),
-    );
-  }
-}
-
-class _OutFieldAnimation extends StatefulWidget {
-  final Widget inputWidget;
-  final double boxHeight;
-  final VoidCallback? onEnd;
-  final Color colorEnd;
-  const _OutFieldAnimation({
-    required this.inputWidget,
-    required this.boxHeight,
-    this.colorEnd = Colors.white,
-    this.onEnd,
-  });
-  @override
-  State<_OutFieldAnimation> createState() => _OutFieldAnimationState();
-}
-
-class _OutFieldAnimationState extends State<_OutFieldAnimation> {
-  late double height;
-  double offset = 0;
-  bool inEndAnimation = false;
-
-  @override
-  void initState() {
-    super.initState();
-    height = widget.boxHeight;
-    Future.delayed(Duration.zero).then(
-      (value) => setState(() {
-        offset = 1;
-        Future.delayed(const Duration(milliseconds: 500)).then(
-          (value) => setState(() {
-            inEndAnimation = true;
-            height = 0;
-          }),
-        );
-      }),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.red,
-      width: double.infinity,
-      child: AnimatedSlide(
-        duration: const Duration(milliseconds: 500),
-        offset: Offset(offset, 0),
-        curve: Curves.easeOutQuint,
-        child: ColoredBox(
-          color: inEndAnimation ? Colors.transparent : widget.colorEnd,
-          child: AnimatedContainer(
-            curve: Curves.bounceOut,
-            height: height,
-            duration: const Duration(seconds: 1),
-            onEnd: () => widget.onEnd!(),
-            child: inEndAnimation
-                ? Container()
-                : Center(child: widget.inputWidget),
-          ),
-        ),
-      ),
     );
   }
 }

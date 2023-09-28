@@ -34,41 +34,6 @@ class _EmailInput extends StatelessWidget {
   }
 }
 
-class _SignUpButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SizedBox(
-      height: 40,
-      child: BlocBuilder<AnimationCubit, AnimationState>(
-        builder: (context, state) {
-          return TextButton(
-            key: const Key('loginForm_createAccount_flatButton'),
-            style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              backgroundColor: Colors.transparent,
-            ),
-            onPressed: () {
-              if (state.status == ButtonPushStatus.loginEnd ||
-                  state.status == ButtonPushStatus.initialScreen) {
-                FocusScope.of(context).unfocus();
-                context.read<LoginCubit>().resetForms();
-                context.read<AnimationCubit>().toSignup();
-              }
-            },
-            child: Text(
-              'SIGN UP',
-              style: TextStyle(color: theme.primaryColor),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
 class _PasswordInput extends StatefulWidget {
   @override
   State<_PasswordInput> createState() => _PasswordInputState();
@@ -141,7 +106,7 @@ class _GoogleLoginButton extends StatelessWidget {
           ),
           style: ElevatedButton.styleFrom(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(10),
             ),
             backgroundColor: theme.colorScheme.secondary,
           ),
@@ -162,6 +127,14 @@ class _GoogleLoginButton extends StatelessWidget {
 }
 
 class _LoginButton extends StatelessWidget {
+  final VoidCallback? onTap;
+  final Color color;
+  final Widget textWidget;
+  const _LoginButton({
+    this.onTap,
+    this.color = const Color(0xFFFFD600),
+    required this.textWidget,
+  });
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -171,25 +144,81 @@ class _LoginButton extends StatelessWidget {
             ? const CircularProgressIndicator()
             : SizedBox(
                 height: 40,
+                width: 80,
                 child: TextButton(
                   key: const Key('loginForm_continue_raisedButton'),
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    backgroundColor: const Color(0xFFFFD600),
+                    backgroundColor: color,
                   ),
-                  onPressed: state.isValid
-                      ? () => context.read<LoginCubit>().logInWithCredentials()
-                      : () => (),
-                  child: Text(
-                    'LOGIN',
+                  onPressed: () {
+                    if (state.isValid) {
+                      context.read<LoginCubit>().logInWithCredentials();
+                    }
+                    onTap!();
+                  },
+                  child: DefaultTextStyle(
                     style: TextStyle(
-                      color: state.isValid ? theme.primaryColor : Colors.grey,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: state.isValid || onTap != null
+                          ? theme.primaryColor
+                          : Colors.grey,
                     ),
+                    child: textWidget,
                   ),
                 ),
               );
+      },
+    );
+  }
+}
+
+class _SignUpButton extends StatelessWidget {
+  final VoidCallback? onTap;
+  final Color color;
+  final Widget textWidget;
+  const _SignUpButton({
+    this.onTap,
+    this.color = Colors.transparent,
+    required this.textWidget,
+  });
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return BlocBuilder<SignUpCubit, SignUpState>(
+      builder: (context, state) {
+        return SizedBox(
+          height: 40,
+          width: 80,
+          child: TextButton(
+            key: const Key('loginForm_createAccount_flatButton'),
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              backgroundColor: color,
+            ),
+            onPressed: () {
+              if (state.isValid) {
+                context.read<SignUpCubit>().signUpFormSubmitted();
+              }
+              onTap!();
+            },
+            child: DefaultTextStyle(
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: state.isValid || onTap != null
+                    ? theme.primaryColor
+                    : Colors.grey,
+              ),
+              child: textWidget,
+            ),
+          ),
+        );
       },
     );
   }
