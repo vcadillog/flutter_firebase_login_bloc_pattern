@@ -49,6 +49,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   bool _userError = false;
   bool _passwordError = false;
+  bool _confirmPasswordError = false;
 
   @override
   void initState() {
@@ -138,6 +139,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 isValidSignup = state.isValid;
                                 _userError = state.email.displayError != null;
                                 // TODO: DISPLAY EXPLICIT ERRORS
+                                print(state.password.error);
                                 _passwordError =
                                     state.password.displayError != null;
                               },
@@ -218,20 +220,29 @@ class _LoginScreenState extends State<LoginScreen>
                         children: [
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 10.0),
-                            child: _ConfirmPasswordField(
-                              onChanged: (confirmPassword) => context
-                                  .read<SignUpCubit>()
-                                  .confirmedPasswordChanged(confirmPassword!),
-                              enabled: true,
-                              width: textFieldWidth,
-                              loadingController: _formLoadingController,
-                              isSubmitting: _isSubmitting,
-                              messages: widget.messages,
-                              validator: (String? value) {
-                                return (value != null && value.contains('%'))
-                                    ? 'Do not use the % char.'
-                                    : null;
+                            child: BlocListener<SignUpCubit, SignUpState>(
+                              listenWhen: (previous, current) =>
+                                  state.screen == Screens.signup,
+                              listener: (context, state) {
+                                _confirmPasswordError =
+                                    state.confirmedPassword.displayError !=
+                                        null;
                               },
+                              child: _ConfirmPasswordField(
+                                onChanged: (confirmPassword) => context
+                                    .read<SignUpCubit>()
+                                    .confirmedPasswordChanged(confirmPassword!),
+                                enabled: true,
+                                width: textFieldWidth,
+                                loadingController: _formLoadingController,
+                                isSubmitting: _isSubmitting,
+                                messages: widget.messages,
+                                validator: (String? value) {
+                                  return _confirmPasswordError
+                                      ? 'Password does not match'
+                                      : null;
+                                },
+                              ),
                             ),
                           ),
                         ],
@@ -305,14 +316,43 @@ class _LoginScreenState extends State<LoginScreen>
                                 listenWhen: (previous, current) =>
                                     state.screen == Screens.signup,
                                 listener: (context, state) {
-                                  Future.delayed(const Duration(seconds: 1))
-                                      .then((value) {
-                                    !state.status.isSuccess
-                                        ? _submitController.reverse()
-                                        : context
-                                            .read<AppBloc>()
-                                            .add(const AppAnimationFinished());
-                                  });
+                                  if (state.status.isSuccess) {
+                                    context
+                                        .read<AppBloc>()
+                                        .add(const AppAnimationFinished());
+                                  } else if (state.status.isFailure &&
+                                      submitPushed) {
+                                    submitPushed = false;
+                                    Flushbar(
+                                      backgroundColor: Colors.red,
+                                      boxShadows: const [
+                                        BoxShadow(
+                                          color: Colors.red,
+                                          offset: Offset(0.0, 2.0),
+                                          blurRadius: 3.0,
+                                        ),
+                                      ],
+                                      icon: const Icon(
+                                        FontAwesomeIcons.triangleExclamation,
+                                        color: Colors.yellow,
+                                      ),
+                                      flushbarStyle: FlushbarStyle.GROUNDED,
+                                      flushbarPosition: FlushbarPosition.TOP,
+                                      messageText: Text(
+                                        state.errorMessage!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      duration: const Duration(seconds: 3),
+                                    ).show(context);
+
+                                    Future.delayed(const Duration(seconds: 1))
+                                        .then((value) {
+                                      _submitController.reverse();
+                                    });
+                                  }
                                 },
                               ),
                             ],
