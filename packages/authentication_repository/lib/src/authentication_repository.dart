@@ -64,6 +64,17 @@ class LogInWithEmailAndPasswordFailure implements Exception {
   /// from a firebase authentication exception code.
   factory LogInWithEmailAndPasswordFailure.fromCode(String code) {
     switch (code) {
+      /// This code happens when using Enumerate Email protection
+      /// https://github.com/firebase/flutterfire/blob/925f560e97d14590e39721d02de3c33828cb1f00/packages/firebase_auth/firebase_auth_platform_interface/lib/src/method_channel/utils/exception.dart#L120
+      case 'invalid-login-credentials' || 'INVALID_LOGIN_CREDENTIALS':
+        return const LogInWithEmailAndPasswordFailure(
+          'Email or password is not valid.',
+        );
+
+      case 'too-many-requests':
+        return const LogInWithEmailAndPasswordFailure(
+          'Too many failed attempts, try again later.',
+        );
       case 'invalid-email':
         return const LogInWithEmailAndPasswordFailure(
           'Email is not valid or badly formatted.',
@@ -96,7 +107,7 @@ class LogInWithEmailAndPasswordFailure implements Exception {
 class LogInWithGoogleFailure implements Exception {
   /// {@macro log_in_with_google_failure}
   const LogInWithGoogleFailure([
-    this.message = 'An unknown exception occurred.',
+    this.message = 'An error occurred.',
   ]);
 
   /// Create an authentication message
@@ -251,8 +262,10 @@ class AuthenticationRepository {
         password: password,
       );
     } on firebase_auth.FirebaseAuthException catch (e) {
+      print('On catch $e');
       throw LogInWithEmailAndPasswordFailure.fromCode(e.code);
-    } catch (_) {
+    } catch (e) {
+      print('On other exception $e');
       throw const LogInWithEmailAndPasswordFailure();
     }
   }

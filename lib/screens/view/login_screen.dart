@@ -43,6 +43,7 @@ class _LoginScreenState extends State<LoginScreen>
   var isLogin = true;
   bool isValidLogin = false;
   bool isValidSignup = false;
+  bool submitPushed = false;
 
   bool get buttonEnabled => !_isLoading && !_isSubmitting;
 
@@ -261,14 +262,43 @@ class _LoginScreenState extends State<LoginScreen>
                                 listenWhen: (previous, current) =>
                                     state.screen == Screens.login,
                                 listener: (context, state) {
-                                  Future.delayed(const Duration(seconds: 1))
-                                      .then((value) {
-                                    !state.status.isSuccess
-                                        ? _submitController.reverse()
-                                        : context
-                                            .read<AppBloc>()
-                                            .add(const AppAnimationFinished());
-                                  });
+                                  if (state.status.isSuccess) {
+                                    context
+                                        .read<AppBloc>()
+                                        .add(const AppAnimationFinished());
+                                  } else if (state.status.isFailure &&
+                                      submitPushed) {
+                                    submitPushed = false;
+                                    Flushbar(
+                                      backgroundColor: Colors.red,
+                                      boxShadows: const [
+                                        BoxShadow(
+                                          color: Colors.red,
+                                          offset: Offset(0.0, 2.0),
+                                          blurRadius: 3.0,
+                                        ),
+                                      ],
+                                      icon: const Icon(
+                                        FontAwesomeIcons.triangleExclamation,
+                                        color: Colors.yellow,
+                                      ),
+                                      flushbarStyle: FlushbarStyle.GROUNDED,
+                                      flushbarPosition: FlushbarPosition.TOP,
+                                      messageText: Text(
+                                        state.errorMessage!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      duration: const Duration(seconds: 3),
+                                    ).show(context);
+
+                                    Future.delayed(const Duration(seconds: 1))
+                                        .then((value) {
+                                      _submitController.reverse();
+                                    });
+                                  }
                                 },
                               ),
                               BlocListener<SignUpCubit, SignUpState>(
@@ -295,16 +325,43 @@ class _LoginScreenState extends State<LoginScreen>
                               onPressed: () {
                                 if (state.screen == Screens.login &&
                                     isValidLogin) {
+                                  submitPushed = true;
                                   _submitController.forward();
                                   context
                                       .read<LoginCubit>()
                                       .logInWithCredentials();
                                 } else if (state.screen == Screens.signup &&
                                     isValidSignup) {
+                                  submitPushed = true;
                                   _submitController.forward();
                                   context
                                       .read<SignUpCubit>()
                                       .signUpFormSubmitted();
+                                } else {
+                                  Flushbar(
+                                    backgroundColor: Colors.red,
+                                    boxShadows: const [
+                                      BoxShadow(
+                                        color: Colors.red,
+                                        offset: Offset(0.0, 2.0),
+                                        blurRadius: 3.0,
+                                      ),
+                                    ],
+                                    icon: const Icon(
+                                      FontAwesomeIcons.triangleExclamation,
+                                      color: Colors.yellow,
+                                    ),
+                                    flushbarStyle: FlushbarStyle.GROUNDED,
+                                    flushbarPosition: FlushbarPosition.TOP,
+                                    messageText: const Text(
+                                      'Invalid user or password',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    duration: const Duration(seconds: 3),
+                                  ).show(context);
                                 }
                               },
                             ),
@@ -360,11 +417,16 @@ class _LoginScreenState extends State<LoginScreen>
                             buttonScaleAnimation: _buttonScaleAnimation,
                           ),
                           _GoogleButton(
+                            key:
+                                const Key('loginForm_googleLogin_raisedButton'),
                             submitController: _submitController,
                             buttonScaleAnimation: _buttonScaleAnimation,
                             loadingController: _formLoadingController,
                             messages: widget.messages,
-                            onPressed: () {},
+                            onPressed: () {
+                              context.read<LoginCubit>().logInWithGoogle();
+                              submitPushed = true;
+                            },
                           ),
                         ],
                       ),

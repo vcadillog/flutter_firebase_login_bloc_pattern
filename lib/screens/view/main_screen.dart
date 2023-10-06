@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:another_flushbar/flushbar.dart';
 import 'package:another_transformer_page_view/another_transformer_page_view.dart';
 
 import 'package:flutter/material.dart';
@@ -29,6 +30,7 @@ import 'package:flutter_firebase_login/screens/view/widgets/text_field_utils.dar
 import 'package:flutter_firebase_login/screens/view/widgets/theme.dart';
 
 import 'package:flutter_firebase_login/sign_up/sign_up.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:formz/formz.dart';
 
 import 'package:sign_in_button/sign_in_button.dart';
