@@ -2,6 +2,7 @@ part of 'app_bloc.dart';
 
 enum AppStatus {
   authenticated,
+  authenticatedAnimationFinished,
   unauthenticated,
 }
 
@@ -15,6 +16,9 @@ final class AppState extends Equatable {
       : this._(status: AppStatus.authenticated, user: user);
 
   const AppState.unauthenticated() : this._(status: AppStatus.unauthenticated);
+
+  const AppState.authenticatedAnimationFinished(User user)
+      : this._(status: AppStatus.authenticatedAnimationFinished, user: user);
 
   final AppStatus status;
   final User user;

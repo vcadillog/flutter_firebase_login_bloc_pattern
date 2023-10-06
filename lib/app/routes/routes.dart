@@ -8,9 +8,9 @@ List<Page<dynamic>> onGenerateAppViewPages(
   List<Page<dynamic>> pages,
 ) {
   switch (state) {
-    case AppStatus.authenticated:
+    case AppStatus.authenticatedAnimationFinished:
       return [HomePage.page()];
-    case AppStatus.unauthenticated:
+    case AppStatus.unauthenticated || AppStatus.authenticated:
       return [LoginPage.page()];
   }
 }

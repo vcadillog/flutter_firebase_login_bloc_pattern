@@ -13,3 +13,7 @@ final class _AppUserChanged extends AppEvent {
 
   final User user;
 }
+
+final class AppAnimationFinished extends AppEvent {
+  const AppAnimationFinished();
+}

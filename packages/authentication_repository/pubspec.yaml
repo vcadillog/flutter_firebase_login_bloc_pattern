@@ -13,7 +13,7 @@ dependencies:
   firebase_auth: ^4.6.0
   firebase_core: ^2.12.0
   flutter:
-    sdk: flutter
+    sdk: flutter  
   google_sign_in: ^6.1.0
   lint: ^2.1.2
   meta: ^1.8.0

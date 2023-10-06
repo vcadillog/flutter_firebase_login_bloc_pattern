@@ -7,6 +7,7 @@ final theme = ThemeData(
   primaryColorLight: const Color(0xFFB2EBF2),
   primaryColor: Colors.purple,
   colorScheme: const ColorScheme.light(secondary: Color(0xFF009688)),
+  visualDensity: VisualDensity.standard,
   scaffoldBackgroundColor: const Color.fromARGB(255, 53, 104, 197),
   inputDecorationTheme: InputDecorationTheme(
     border: OutlineInputBorder(
