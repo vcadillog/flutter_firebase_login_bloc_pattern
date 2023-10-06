@@ -97,6 +97,63 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
+  void passwordError(SignUpState state) {
+    switch (state.password.displayError) {
+      case PasswordValidationError.invalid:
+        _passwordError =
+            'Password must be at least 8 characters long and have one letter and one number.';
+      case PasswordValidationError.invalidLen:
+        _passwordError = 'Password must be at least 8 characters long.';
+      case PasswordValidationError.invalidLenLetter:
+        _passwordError =
+            'Password must be at least 8 characters long and have one letter.';
+      case PasswordValidationError.invalidLenNumber:
+        _passwordError =
+            'Password must be at least 8 characters long and have one number.';
+      case PasswordValidationError.invalidLetter:
+        _passwordError = 'Password must include at least one letter.';
+      case PasswordValidationError.invalidLetterNum:
+        _passwordError =
+            'Password must include at least one number and one letter.';
+      case PasswordValidationError.invalidNumber:
+        _passwordError = 'Password must include at least one number.';
+      default:
+        _passwordError = '';
+    }
+  }
+
+  void submitFailureFlushbar(String message) {
+    submitPushed = false;
+    Flushbar(
+      backgroundColor: Colors.red,
+      boxShadows: const [
+        BoxShadow(
+          color: Colors.red,
+          offset: Offset(0.0, 2.0),
+          blurRadius: 3.0,
+        ),
+      ],
+      icon: const Icon(
+        FontAwesomeIcons.triangleExclamation,
+        color: Colors.yellow,
+      ),
+      flushbarStyle: FlushbarStyle.GROUNDED,
+      flushbarPosition: FlushbarPosition.TOP,
+      messageText: Text(
+        message,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      duration: const Duration(seconds: 3),
+    ).show(context);
+
+    Future.delayed(const Duration(seconds: 1)).then((_) {
+      _submitController.reverse();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final cardWidth = min(MediaQuery.of(context).size.width * 0.75, 360.0);
@@ -141,32 +198,7 @@ class _LoginScreenState extends State<LoginScreen>
                               listener: (context, state) {
                                 isValidSignup = state.isValid;
                                 _userError = state.email.displayError != null;
-
-                                switch (state.password.displayError) {
-                                  case PasswordValidationError.invalid:
-                                    _passwordError =
-                                        'Password must be at least 8 characters long and have one letter and a number.';
-                                  case PasswordValidationError.invalidLen:
-                                    _passwordError =
-                                        'Password must be at least 8 characters long.';
-                                  case PasswordValidationError.invalidLenLetter:
-                                    _passwordError =
-                                        'Password must be at least 8 characters long and one letter.';
-                                  case PasswordValidationError.invalidLenNumber:
-                                    _passwordError =
-                                        'Password must be at least 8 characters long and one number.';
-                                  case PasswordValidationError.invalidLetter:
-                                    _passwordError =
-                                        'Password must include at least one letter.';
-                                  case PasswordValidationError.invalidLetterNum:
-                                    _passwordError =
-                                        'Password must include at least one number and letter.';
-                                  case PasswordValidationError.invalidNumber:
-                                    _passwordError =
-                                        'Password must include at least one number.';
-                                  default:
-                                    _passwordError = '';
-                                }
+                                passwordError(state);
                               },
                             ),
                           ],
@@ -296,8 +328,6 @@ class _LoginScreenState extends State<LoginScreen>
                           MultiBlocListener(
                             listeners: [
                               BlocListener<LoginCubit, LoginState>(
-                                listenWhen: (previous, current) =>
-                                    state.screen == Screens.login,
                                 listener: (context, state) {
                                   if (state.status.isSuccess) {
                                     context
@@ -305,36 +335,9 @@ class _LoginScreenState extends State<LoginScreen>
                                         .add(const AppAnimationFinished());
                                   } else if (state.status.isFailure &&
                                       submitPushed) {
-                                    submitPushed = false;
-                                    Flushbar(
-                                      backgroundColor: Colors.red,
-                                      boxShadows: const [
-                                        BoxShadow(
-                                          color: Colors.red,
-                                          offset: Offset(0.0, 2.0),
-                                          blurRadius: 3.0,
-                                        ),
-                                      ],
-                                      icon: const Icon(
-                                        FontAwesomeIcons.triangleExclamation,
-                                        color: Colors.yellow,
-                                      ),
-                                      flushbarStyle: FlushbarStyle.GROUNDED,
-                                      flushbarPosition: FlushbarPosition.TOP,
-                                      messageText: Text(
-                                        state.errorMessage!,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      duration: const Duration(seconds: 3),
-                                    ).show(context);
-
-                                    Future.delayed(const Duration(seconds: 1))
-                                        .then((value) {
-                                      _submitController.reverse();
-                                    });
+                                    submitFailureFlushbar(
+                                      state.errorMessage!,
+                                    );
                                   }
                                 },
                               ),
@@ -348,36 +351,9 @@ class _LoginScreenState extends State<LoginScreen>
                                         .add(const AppAnimationFinished());
                                   } else if (state.status.isFailure &&
                                       submitPushed) {
-                                    submitPushed = false;
-                                    Flushbar(
-                                      backgroundColor: Colors.red,
-                                      boxShadows: const [
-                                        BoxShadow(
-                                          color: Colors.red,
-                                          offset: Offset(0.0, 2.0),
-                                          blurRadius: 3.0,
-                                        ),
-                                      ],
-                                      icon: const Icon(
-                                        FontAwesomeIcons.triangleExclamation,
-                                        color: Colors.yellow,
-                                      ),
-                                      flushbarStyle: FlushbarStyle.GROUNDED,
-                                      flushbarPosition: FlushbarPosition.TOP,
-                                      messageText: Text(
-                                        state.errorMessage!,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      duration: const Duration(seconds: 3),
-                                    ).show(context);
-
-                                    Future.delayed(const Duration(seconds: 1))
-                                        .then((value) {
-                                      _submitController.reverse();
-                                    });
+                                    submitFailureFlushbar(
+                                      state.errorMessage!,
+                                    );
                                   }
                                 },
                               ),
