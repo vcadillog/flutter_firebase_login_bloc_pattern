@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool get buttonEnabled => !_isLoading && !_isSubmitting;
 
   bool _userError = false;
-  bool _passwordError = false;
+  String _passwordError = '';
   bool _confirmPasswordError = false;
 
   @override
@@ -128,8 +128,11 @@ class _LoginScreenState extends State<LoginScreen>
                               listener: (context, state) {
                                 isValidLogin = state.isValid;
                                 _userError = state.email.displayError != null;
-                                _passwordError =
-                                    state.password.displayError != null;
+                                if (state.password.error != null) {
+                                  _passwordError = 'Invalid password';
+                                } else {
+                                  _passwordError = '';
+                                }
                               },
                             ),
                             BlocListener<SignUpCubit, SignUpState>(
@@ -138,10 +141,32 @@ class _LoginScreenState extends State<LoginScreen>
                               listener: (context, state) {
                                 isValidSignup = state.isValid;
                                 _userError = state.email.displayError != null;
-                                // TODO: DISPLAY EXPLICIT ERRORS
-                                print(state.password.error);
-                                _passwordError =
-                                    state.password.displayError != null;
+
+                                switch (state.password.displayError) {
+                                  case PasswordValidationError.invalid:
+                                    _passwordError =
+                                        'Password must be at least 8 characters long and have one letter and a number.';
+                                  case PasswordValidationError.invalidLen:
+                                    _passwordError =
+                                        'Password must be at least 8 characters long.';
+                                  case PasswordValidationError.invalidLenLetter:
+                                    _passwordError =
+                                        'Password must be at least 8 characters long and one letter.';
+                                  case PasswordValidationError.invalidLenNumber:
+                                    _passwordError =
+                                        'Password must be at least 8 characters long and one number.';
+                                  case PasswordValidationError.invalidLetter:
+                                    _passwordError =
+                                        'Password must include at least one letter.';
+                                  case PasswordValidationError.invalidLetterNum:
+                                    _passwordError =
+                                        'Password must include at least one number and letter.';
+                                  case PasswordValidationError.invalidNumber:
+                                    _passwordError =
+                                        'Password must include at least one number.';
+                                  default:
+                                    _passwordError = '';
+                                }
                               },
                             ),
                           ],
@@ -184,13 +209,14 @@ class _LoginScreenState extends State<LoginScreen>
                                   }
                                 },
                                 enabled: true,
+                                errorMaxLines: 3,
                                 width: textFieldWidth,
                                 loadingController: _formLoadingController,
                                 isSubmitting: _isSubmitting,
                                 messages: widget.messages,
                                 validator: (String? value) {
-                                  return _passwordError
-                                      ? 'Invalid password'
+                                  return _passwordError != ''
+                                      ? _passwordError
                                       : null;
                                 },
                               ),
@@ -574,6 +600,7 @@ class _PasswordField extends StatefulWidget {
   final bool enabled;
   final FormFieldSetter<String>? onChanged;
   final FormFieldValidator<String>? validator;
+  final int? errorMaxLines;
 
   const _PasswordField({
     super.key,
@@ -584,6 +611,7 @@ class _PasswordField extends StatefulWidget {
     required this.enabled,
     this.onChanged,
     this.validator,
+    this.errorMaxLines = 1,
   });
 
   @override
@@ -607,6 +635,7 @@ class _PasswordFieldState extends State<_PasswordField> {
     return AnimatedPasswordTextFormField(
       onChanged: widget.onChanged,
       enabled: widget.enabled,
+      errorMaxLines: widget.errorMaxLines,
       controller: _passController,
       animatedWidth: widget.width,
       validator: widget.validator,

@@ -31,6 +31,7 @@ import 'package:flutter_firebase_login/screens/view/widgets/theme.dart';
 
 import 'package:flutter_firebase_login/sign_up/sign_up.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:form_inputs/form_inputs.dart';
 import 'package:formz/formz.dart';
 
 import 'package:sign_in_button/sign_in_button.dart';

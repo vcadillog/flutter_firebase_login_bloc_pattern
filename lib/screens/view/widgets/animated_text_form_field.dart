@@ -57,6 +57,7 @@ class AnimatedTextFormField extends StatefulWidget {
     this.autofillHints,
     this.tooltip,
     required this.initialIsoCode,
+    this.errorMaxLines = 1,
   }) : assert(
           (inertiaController == null && inertiaDirection == null) ||
               (inertiaController != null && inertiaDirection != null),
@@ -76,6 +77,7 @@ class AnimatedTextFormField extends StatefulWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final TextInputType? keyboardType;
+  final int? errorMaxLines;
   final TextInputAction? textInputAction;
   final bool obscureText;
   final TextEditingController? controller;
@@ -257,6 +259,7 @@ class _AnimatedTextFormFieldState extends State<AnimatedTextFormField> {
 
   InputDecoration _getInputDecoration(ThemeData theme) {
     return InputDecoration(
+      errorMaxLines: widget.errorMaxLines,
       labelText: widget.labelText,
       prefixIcon: _buildInertiaAnimation(widget.prefixIcon),
       suffixIcon: _buildInertiaAnimation(
@@ -465,6 +468,7 @@ class AnimatedPasswordTextFormField extends StatefulWidget {
     this.onChanged,
     this.autofillHints,
     required this.initialIsoCode,
+    this.errorMaxLines = 1,
   }) : assert(
           (inertiaController == null && inertiaDirection == null) ||
               (inertiaController != null && inertiaDirection != null),
@@ -487,6 +491,7 @@ class AnimatedPasswordTextFormField extends StatefulWidget {
   final TextFieldInertiaDirection? inertiaDirection;
   final Iterable<String>? autofillHints;
   final String? initialIsoCode;
+  final int? errorMaxLines;
 
   @override
   State<AnimatedPasswordTextFormField> createState() =>
@@ -501,6 +506,7 @@ class _AnimatedPasswordTextFormFieldState
   Widget build(BuildContext context) {
     return AnimatedTextFormField(
       onChanged: widget.onChanged,
+      errorMaxLines: widget.errorMaxLines,
       interval: widget.interval,
       loadingController: widget.loadingController,
       inertiaController: widget.inertiaController,
