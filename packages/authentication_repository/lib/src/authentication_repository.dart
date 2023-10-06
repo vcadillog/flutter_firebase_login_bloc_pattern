@@ -214,7 +214,6 @@ class AuthenticationRepository {
         password: password,
       );
     } on firebase_auth.FirebaseAuthException catch (e) {
-      print(e);
       throw SignUpWithEmailAndPasswordFailure.fromCode(e.code);
     } catch (_) {
       throw const SignUpWithEmailAndPasswordFailure();
@@ -263,10 +262,8 @@ class AuthenticationRepository {
         password: password,
       );
     } on firebase_auth.FirebaseAuthException catch (e) {
-      print('On catch $e');
       throw LogInWithEmailAndPasswordFailure.fromCode(e.code);
-    } catch (e) {
-      print('On other exception $e');
+    } catch (_) {
       throw const LogInWithEmailAndPasswordFailure();
     }
   }

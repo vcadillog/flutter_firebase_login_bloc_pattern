@@ -202,58 +202,90 @@ class _LoginScreenState extends State<LoginScreen>
                               },
                             ),
                           ],
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              _UserField(
-                                onChanged: (email) {
-                                  if (state.screen == Screens.login) {
-                                    context
-                                        .read<LoginCubit>()
-                                        .emailChanged(email!);
-                                  } else if (state.screen == Screens.signup) {
-                                    context
-                                        .read<SignUpCubit>()
-                                        .emailChanged(email!);
-                                  }
-                                },
-                                width: textFieldWidth,
-                                enabled: true,
-                                loadingController: _formLoadingController,
-                                isSubmitting: _isSubmitting,
-                                userType: LoginUserType.email,
-                                messages: widget.messages,
-                                validator: (String? value) {
-                                  return _userError ? 'Invalid email' : null;
-                                },
-                              ),
-                              const SizedBox(height: 20),
-                              _PasswordField(
-                                onChanged: (password) {
-                                  if (state.screen == Screens.login) {
-                                    context
-                                        .read<LoginCubit>()
-                                        .passwordChanged(password!);
-                                  } else if (state.screen == Screens.signup) {
-                                    context
-                                        .read<SignUpCubit>()
-                                        .passwordChanged(password!);
-                                  }
-                                },
-                                enabled: true,
-                                errorMaxLines: 3,
-                                width: textFieldWidth,
-                                loadingController: _formLoadingController,
-                                isSubmitting: _isSubmitting,
-                                messages: widget.messages,
-                                validator: (String? value) {
-                                  return _passwordError != ''
-                                      ? _passwordError
-                                      : null;
-                                },
-                              ),
-                              const SizedBox(height: 10),
-                            ],
+                          child: Builder(
+                            builder: (context) {
+                              final stateLogin =
+                                  context.watch<LoginCubit>().state;
+                              final stateSignup =
+                                  context.watch<SignUpCubit>().state;
+                              final String? initialEmailText;
+                              if (stateLogin.email.value.isNotEmpty) {
+                                initialEmailText = stateLogin.email.value;
+                              } else if (stateSignup.email.value.isNotEmpty) {
+                                initialEmailText = stateSignup.email.value;
+                              } else {
+                                initialEmailText = null;
+                              }
+                              final String? initialPasswordText;
+                              if (stateLogin.password.value.isNotEmpty) {
+                                initialPasswordText = stateLogin.password.value;
+                              } else if (stateSignup
+                                  .password.value.isNotEmpty) {
+                                initialPasswordText =
+                                    stateSignup.password.value;
+                              } else {
+                                initialPasswordText = null;
+                              }
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  _UserField(
+                                    initialText: initialEmailText,
+                                    onChanged: (email) {
+                                      if (state.screen == Screens.login) {
+                                        context
+                                            .read<LoginCubit>()
+                                            .emailChanged(email!);
+                                      } else if (state.screen ==
+                                          Screens.signup) {
+                                        context
+                                            .read<SignUpCubit>()
+                                            .emailChanged(email!);
+                                      }
+                                    },
+                                    width: textFieldWidth,
+                                    enabled: true,
+                                    loadingController: _formLoadingController,
+                                    isSubmitting: _isSubmitting,
+                                    userType: LoginUserType.email,
+                                    messages: widget.messages,
+                                    validator: (String? value) {
+                                      return _userError
+                                          ? 'Invalid email'
+                                          : null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 20),
+                                  _PasswordField(
+                                    initialText: initialPasswordText,
+                                    onChanged: (password) {
+                                      if (state.screen == Screens.login) {
+                                        context
+                                            .read<LoginCubit>()
+                                            .passwordChanged(password!);
+                                      } else if (state.screen ==
+                                          Screens.signup) {
+                                        context
+                                            .read<SignUpCubit>()
+                                            .passwordChanged(password!);
+                                      }
+                                    },
+                                    enabled: true,
+                                    errorMaxLines: 3,
+                                    width: textFieldWidth,
+                                    loadingController: _formLoadingController,
+                                    isSubmitting: _isSubmitting,
+                                    messages: widget.messages,
+                                    validator: (String? value) {
+                                      return _passwordError != ''
+                                          ? _passwordError
+                                          : null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 10),
+                                ],
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -278,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen>
                         children: [
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 10.0),
-                            child: BlocListener<SignUpCubit, SignUpState>(
+                            child: BlocConsumer<SignUpCubit, SignUpState>(
                               listenWhen: (previous, current) =>
                                   state.screen == Screens.signup,
                               listener: (context, state) {
@@ -286,21 +318,26 @@ class _LoginScreenState extends State<LoginScreen>
                                     state.confirmedPassword.displayError !=
                                         null;
                               },
-                              child: _ConfirmPasswordField(
-                                onChanged: (confirmPassword) => context
-                                    .read<SignUpCubit>()
-                                    .confirmedPasswordChanged(confirmPassword!),
-                                enabled: true,
-                                width: textFieldWidth,
-                                loadingController: _formLoadingController,
-                                isSubmitting: _isSubmitting,
-                                messages: widget.messages,
-                                validator: (String? value) {
-                                  return _confirmPasswordError
-                                      ? 'Password does not match'
-                                      : null;
-                                },
-                              ),
+                              builder: (context, state) {
+                                return _ConfirmPasswordField(
+                                  initialText: state.confirmedPassword.value,
+                                  onChanged: (confirmPassword) => context
+                                      .read<SignUpCubit>()
+                                      .confirmedPasswordChanged(
+                                        confirmPassword!,
+                                      ),
+                                  enabled: true,
+                                  width: textFieldWidth,
+                                  loadingController: _formLoadingController,
+                                  isSubmitting: _isSubmitting,
+                                  messages: widget.messages,
+                                  validator: (String? value) {
+                                    return _confirmPasswordError
+                                        ? 'Password does not match'
+                                        : null;
+                                  },
+                                );
+                              },
                             ),
                           ),
                         ],
@@ -493,6 +530,7 @@ class _UserField extends StatefulWidget {
   final bool enabled;
   final FormFieldSetter<String>? onChanged;
   final FormFieldValidator<String>? validator;
+  final String? initialText;
 
   const _UserField({
     super.key,
@@ -504,6 +542,7 @@ class _UserField extends StatefulWidget {
     required this.enabled,
     this.onChanged,
     this.validator,
+    this.initialText,
   });
 
   @override
@@ -519,9 +558,14 @@ class _UserFieldState extends State<_UserField> {
   @override
   void initState() {
     super.initState();
-    // _nameController = TextEditingController(text: 'Email');
-    _nameController = TextEditingController();
+    _nameController = TextEditingController(text: widget.initialText);
     _nameTextFieldLoadingAnimationInterval = const Interval(0, .85);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
   }
 
   @override
@@ -555,15 +599,8 @@ class _UserFieldState extends State<_UserField> {
         widget.userType,
       ),
       textInputAction: TextInputAction.next,
-      // focusNode: _userFocusNode,
-      // onFieldSubmitted: (value) {
-      //   FocusScope.of(context).requestFocus(_passwordFocusNode);
-      // },
-      // validator: widget.userValidator,
-      // onSaved: (value) => auth.email = value!,
       // enabled: !_isSubmitting,
       initialIsoCode: null,
-      // initialIsoCode: widget.initialIsoCode,
     );
   }
 }
@@ -577,6 +614,7 @@ class _PasswordField extends StatefulWidget {
   final FormFieldSetter<String>? onChanged;
   final FormFieldValidator<String>? validator;
   final int? errorMaxLines;
+  final String? initialText;
 
   const _PasswordField({
     super.key,
@@ -588,6 +626,7 @@ class _PasswordField extends StatefulWidget {
     this.onChanged,
     this.validator,
     this.errorMaxLines = 1,
+    this.initialText,
   });
 
   @override
@@ -601,9 +640,14 @@ class _PasswordFieldState extends State<_PasswordField> {
   @override
   void initState() {
     super.initState();
-    // _passController = TextEditingController(text: 'Password');
-    _passController = TextEditingController();
+    _passController = TextEditingController(text: widget.initialText);
     _passTextFieldLoadingAnimationInterval = const Interval(.15, 1.0);
+  }
+
+  @override
+  void dispose() {
+    _passController.dispose();
+    super.dispose();
   }
 
   @override
@@ -633,6 +677,7 @@ class _ConfirmPasswordField extends StatefulWidget {
   final bool enabled;
   final FormFieldSetter<String>? onChanged;
   final FormFieldValidator<String>? validator;
+  final String? initialText;
 
   const _ConfirmPasswordField({
     super.key,
@@ -643,6 +688,7 @@ class _ConfirmPasswordField extends StatefulWidget {
     required this.enabled,
     this.onChanged,
     this.validator,
+    this.initialText,
   });
 
   @override
@@ -662,12 +708,17 @@ class _ConfirmPasswordFieldState extends State<_ConfirmPasswordField>
       vsync: this,
       duration: const Duration(milliseconds: 150),
     );
-    _confirmPassController = TextEditingController();
+    _confirmPassController = TextEditingController(text: widget.initialText);
+  }
+
+  @override
+  void dispose() {
+    _confirmPassController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return AnimatedPasswordTextFormField(
       onChanged: widget.onChanged,
       validator: widget.validator,
