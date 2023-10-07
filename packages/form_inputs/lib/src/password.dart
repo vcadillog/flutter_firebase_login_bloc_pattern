@@ -3,6 +3,7 @@ import 'package:formz/formz.dart';
 /// Validation errors for the [Password] [FormzInput].
 enum PasswordValidationError {
   /// Generic invalid error.
+  noWhitespaces,
   invalid,
   invalidLetterNum,
   invalidLenNumber,
@@ -25,9 +26,13 @@ class Password extends FormzInput<String, PasswordValidationError> {
   static final _passwordLetterRegExp = RegExp('[A-Za-z]');
   static final _passwordNumberRegExp = RegExp(r'\d');
   static final _passwordLenghtRegExp = RegExp('.{8,}');
+  static final _passwordNoWhitespaces = RegExp(r'\s+');
 
   @override
   PasswordValidationError? validator(String? value) {
+    if (_passwordNoWhitespaces.hasMatch(value ?? '')) {
+      return PasswordValidationError.noWhitespaces;
+    }
     if (!_passwordLenghtRegExp.hasMatch(value ?? '') &&
         !_passwordLetterRegExp.hasMatch(value ?? '') &&
         !_passwordNumberRegExp.hasMatch(value ?? '')) {

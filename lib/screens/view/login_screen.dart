@@ -492,6 +492,8 @@ class _LoginFormGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     String passwordErrorCases(SignUpState state) {
       switch (state.password.displayError) {
+        case PasswordValidationError.noWhitespaces:
+          return "Whitespaces are not allowed";
         case PasswordValidationError.invalid:
           return 'Password must be at least 8 characters long and have one letter and one number.';
         case PasswordValidationError.invalidLen:
@@ -551,20 +553,13 @@ class _LoginFormGroup extends StatelessWidget {
                 builder: (context) {
                   final stateLogin = context.watch<LoginCubit>().state;
                   final stateSignup = context.watch<SignUpCubit>().state;
-                  String? initialEmailText;
-                  String? initialPasswordText;
-                  if (stateScreen.screen == Screens.login) {
-                    initialEmailText = stateLogin.email.value;
-                    initialPasswordText = stateLogin.password.value;
-                  } else if (stateScreen.screen == Screens.signup) {
-                    initialEmailText = stateSignup.email.value;
-                    initialPasswordText = stateSignup.password.value;
-                  }
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       _UserField(
-                        initialText: initialEmailText,
+                        initialText: stateScreen.screen == Screens.login
+                            ? stateLogin.email.value
+                            : stateSignup.email.value,
                         onChanged: (email) {
                           if (stateScreen.screen == Screens.login) {
                             context.read<LoginCubit>().emailChanged(email!);
@@ -585,7 +580,9 @@ class _LoginFormGroup extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
                       _PasswordField(
-                        initialText: initialPasswordText,
+                        initialText: stateScreen.screen == Screens.login
+                            ? stateLogin.password.value
+                            : stateSignup.password.value,
                         onChanged: (password) {
                           if (stateScreen.screen == Screens.login) {
                             context
@@ -890,21 +887,61 @@ class _ControlButtonsGroupState extends State<_ControlButtonsGroup>
                   isLogin: stateScreen.screen == Screens.login,
                   messages: widget.messages,
                   onPressed: () {
-                    if (stateScreen.screen == Screens.login &&
-                        stateLogin.isValid) {
-                      submitPushed = true;
-                      _submitController.forward();
-                      context.read<LoginCubit>().logInWithCredentials();
-                    } else if (stateScreen.screen == Screens.signup &&
-                        stateSignup.isValid) {
-                      submitPushed = true;
-                      _submitController.forward();
-                      context.read<SignUpCubit>().signUpFormSubmitted();
-                    } else {
-                      submitFailureFlushbar(
-                        'Invalid user or password',
-                        onPushedSubmit: true,
-                      );
+                    if (stateScreen.screen == Screens.login) {
+                      if (stateLogin.isValid) {
+                        submitPushed = true;
+                        _submitController.forward();
+                        context.read<LoginCubit>().logInWithCredentials();
+                      } else {
+                        String text = '';
+                        if (stateLogin.email.isNotValid) {
+                          text += 'Invalid user';
+                        }
+                        if (stateLogin.password.isNotValid) {
+                          text +=
+                              text == '' ? 'Invalid password.' : ' & password.';
+                        } else {
+                          text += '.';
+                        }
+
+                        submitFailureFlushbar(
+                          text,
+                          onPushedSubmit: true,
+                        );
+                      }
+                    } else if (stateScreen.screen == Screens.signup) {
+                      if (stateSignup.isValid) {
+                        submitPushed = true;
+                        _submitController.forward();
+                        context.read<SignUpCubit>().signUpFormSubmitted();
+                      } else {
+                        String text = '';
+                        if (stateSignup.email.isNotValid &&
+                            stateSignup.password.isNotValid &&
+                            stateSignup.confirmedPassword.isNotValid) {
+                          text += 'Invalid user, password & confirm password.';
+                        } else {
+                          if (stateSignup.email.isNotValid) {
+                            text += 'Invalid user';
+                          }
+                          if (stateSignup.password.isNotValid) {
+                            text +=
+                                text == '' ? 'Invalid password' : ' & password';
+                          }
+                          if (stateSignup.confirmedPassword.isNotValid) {
+                            text += text == ''
+                                ? 'Invalid confirm password.'
+                                : ' & confirm password.';
+                          } else {
+                            text += '.';
+                          }
+                        }
+
+                        submitFailureFlushbar(
+                          text,
+                          onPushedSubmit: true,
+                        );
+                      }
                     }
                   },
                 ),
