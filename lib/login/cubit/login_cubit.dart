@@ -31,12 +31,14 @@ class LoginCubit extends Cubit<LoginState> {
     );
   }
 
-  void resetForms() {
+  void replaceUserInfo(String emailValue, String passwordValue) {
+    final email = Email.dirty(emailValue);
+    final password = Password.dirty(passwordValue);
     emit(
       state.copyWith(
-        email: const Email.pure(),
-        password: const Password.pure(),
-        isValid: false,
+        email: email,
+        password: password,
+        isValid: Formz.validate([email, password]),
       ),
     );
   }

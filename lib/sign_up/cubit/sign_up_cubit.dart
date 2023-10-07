@@ -61,13 +61,14 @@ class SignUpCubit extends Cubit<SignUpState> {
     );
   }
 
-  void resetForms() {
+  void replaceUserInfo(String emailValue, String passwordValue) {
+    final email = Email.dirty(emailValue);
+    final password = Password.dirty(passwordValue);
     emit(
       state.copyWith(
-        email: const Email.pure(),
-        password: const Password.pure(),
-        confirmedPassword: const ConfirmedPassword.pure(),
-        isValid: false,
+        email: email,
+        password: password,
+        isValid: state.isValid,
       ),
     );
   }
