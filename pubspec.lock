@@ -25,14 +25,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.13.0"
-  animated_text_kit:
-    dependency: "direct main"
-    description:
-      name: animated_text_kit
-      sha256: "37392a5376c9a1a503b02463c38bc0342ef814ddbb8f9977bc90f2a84b22fa92"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.2.2"
   another_flushbar:
     dependency: "direct main"
     description:
@@ -42,7 +34,7 @@ packages:
     source: hosted
     version: "1.12.30"
   another_transformer_page_view:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: another_transformer_page_view
       sha256: a7cd46ede62d621c5abe7e58c7cb2745abe67b3bfec64f59b8889c93d7be7a8e
@@ -260,6 +252,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "8.1.3"
+  flutter_login:
+    dependency: "direct main"
+    description:
+      path: "../../flutter_login"
+      relative: true
+    source: path
+    version: "4.2.1"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -390,7 +389,7 @@ packages:
     source: hosted
     version: "4.0.2"
   intl_phone_number_input:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: intl_phone_number_input
       sha256: b812c6e3924e56e65b9684076ccd8eb24126abe0c84091d35d75a25e613a1793
@@ -574,7 +573,7 @@ packages:
     source: hosted
     version: "2.2.1"
   phone_numbers_parser:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: phone_numbers_parser
       sha256: "3b809c0190e7d1272a831f12a67ae5b329ef889d3a9e6da7a59fe86a471576e5"
@@ -670,7 +669,7 @@ packages:
     source: hosted
     version: "1.0.4"
   sign_in_button:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: sign_in_button
       sha256: "977b9b0415d2f3909e642275dfabba7919ba8e111324641b76cae6d1acbd183e"
@@ -771,7 +770,7 @@ packages:
     source: hosted
     version: "1.3.2"
   url_launcher:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: url_launcher
       sha256: "47e208a6711459d813ba18af120d9663c20bdf6985d6ad39fe165d2538378d27"
