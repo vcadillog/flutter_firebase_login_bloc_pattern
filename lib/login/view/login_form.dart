@@ -1,3 +1,4 @@
+import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_firebase_login/app/app.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_firebase_login/forgot_password/forgot_password.dart';
 import 'package:flutter_firebase_login/login/cubit/login_cubit.dart';
 import 'package:flutter_firebase_login/sign_up/sign_up.dart';
 import 'package:flutter_login/flutter_login.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:formz/formz.dart';
 
 class LoginForm extends StatefulWidget {
@@ -30,6 +32,7 @@ class _LoginFormState extends State<LoginForm> {
   String? userForgotPasswordError;
   bool currentScreen = loginScreen;
   bool onForgotPasswordScreen = false;
+  bool isSubmitted = false;
 
   @override
   void initState() {
@@ -56,6 +59,32 @@ class _LoginFormState extends State<LoginForm> {
       }
     }
 
+    void flushbarStatusMessage(FormzSubmissionStatus status,
+        [String? errorMessage, String? successMessage]) {
+      if (status.isFailure && errorMessage != null) {
+        Flushbar(
+          message: errorMessage,
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.red,
+          icon: const Icon(
+            FontAwesomeIcons.triangleExclamation,
+            color: Colors.yellow,
+          ),
+          flushbarPosition: FlushbarPosition.TOP,
+        ).show(context);
+        isSubmitted = false;
+      } else if (status.isSuccess && successMessage != null) {
+        Flushbar(
+          message: successMessage,
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.green,
+          icon: const Icon(FontAwesomeIcons.check, color: Colors.white),
+          flushbarPosition: FlushbarPosition.TOP,
+        ).show(context);
+        isSubmitted = false;
+      }
+    }
+
     return MultiBlocListener(
       listeners: [
         BlocListener<LoginCubit, LoginState>(
@@ -63,6 +92,9 @@ class _LoginFormState extends State<LoginForm> {
             userError = state.email.isNotValid ? 'Invalid user' : '';
             passwordError = state.password.isNotValid ? 'Invalid password' : '';
             _stateController.changeState(observeState(state.status));
+            if (isSubmitted) {
+              flushbarStatusMessage(state.status, state.errorMessage);
+            }
           },
         ),
         BlocListener<SignUpCubit, SignUpState>(
@@ -70,6 +102,10 @@ class _LoginFormState extends State<LoginForm> {
             userError = state.email.isNotValid ? 'Invalid user' : '';
             passwordError = state.password.isNotValid ? 'Invalid password' : '';
             _stateController.changeState(observeState(state.status));
+            if (isSubmitted) {
+              flushbarStatusMessage(state.status, state.errorMessage,
+                  'We sent you a verification mail');
+            }
           },
         ),
         BlocListener<ForgotPasswordCubit, ForgotPasswordState>(
@@ -77,6 +113,11 @@ class _LoginFormState extends State<LoginForm> {
             userForgotPasswordError =
                 state.email.isNotValid ? 'Invalid user' : '';
             _stateController.changeState(observeState(state.status));
+
+            if (isSubmitted) {
+              flushbarStatusMessage(state.status, state.errorMessage,
+                  'We sent you a mail to restore your password');
+            }
           },
         ),
       ],
@@ -146,12 +187,18 @@ class _LoginFormState extends State<LoginForm> {
             },
             onLogin: (user) {
               context.read<LoginCubit>().logInWithCredentials();
+              isSubmitted = true;
             },
             onSignup: (user) {
               context.read<SignUpCubit>().signUpFormSubmitted();
+              isSubmitted = true;
             },
             onSubmitAnimationCompleted: () {
               context.read<AppBloc>().add(const AppAnimationFinished());
+            },
+            onRecoverPassword: (user) {
+              context.read<ForgotPasswordCubit>().recoverPassword();
+              isSubmitted = true;
             },
             onChangedRecoverUser: (value) {
               context.read<ForgotPasswordCubit>().emailChanged(value!);
@@ -180,9 +227,6 @@ class _LoginFormState extends State<LoginForm> {
                       .emailChanged(stateForgotPassword.email.value);
                 }
               }
-            },
-            onRecoverPassword: (user) {
-              context.read<ForgotPasswordCubit>().recoverPassword();
             },
           );
         },
