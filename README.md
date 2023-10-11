@@ -1,6 +1,13 @@
+
 # Firebase flutter login
 
 Firebase login extending flutter_login library and flutter_bloc guide, added verification login and recover passowrd logic.
+
+### How to use
+
+Follow the firebase official documentation https://firebase.google.com/docs/flutter/setup
+
+And add the generated firebase_options.dart to the /lib directory.
 
 ## Warning
 
