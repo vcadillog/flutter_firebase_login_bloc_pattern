@@ -1,6 +1,7 @@
 import 'package:authentication_repository/authentication_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_firebase_login/forgot_password/forgot_password.dart';
 import 'package:flutter_firebase_login/login/login.dart';
 import 'package:flutter_firebase_login/screens/cubit/screens_cubit.dart';
 import 'package:flutter_firebase_login/sign_up/sign_up.dart';
@@ -29,6 +30,10 @@ class LoginPage extends StatelessWidget {
             BlocProvider(
               create: (_) =>
                   SignUpCubit(context.read<AuthenticationRepository>()),
+            ),
+            BlocProvider(
+              create: (_) =>
+                  ForgotPasswordCubit(context.read<AuthenticationRepository>()),
             ),
           ],
           child: const LoginForm(),

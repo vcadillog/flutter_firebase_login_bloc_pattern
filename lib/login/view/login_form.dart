@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_firebase_login/app/app.dart';
+import 'package:flutter_firebase_login/forgot_password/forgot_password.dart';
 import 'package:flutter_firebase_login/login/cubit/login_cubit.dart';
 import 'package:flutter_firebase_login/sign_up/sign_up.dart';
 import 'package:flutter_login/flutter_login.dart';
@@ -16,9 +17,9 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
-  static const failureLogin = 1;
-  static const successfulLogin = 2;
-  static const otherLoginState = 0;
+  static const failureState = 1;
+  static const successfulState = 2;
+  static const otherState = 0;
   static const loginScreen = true;
   static const signupScreen = false;
 
@@ -26,7 +27,9 @@ class _LoginFormState extends State<LoginForm> {
 
   String? passwordError;
   String? userError;
+  String? userForgotPasswordError;
   bool currentScreen = loginScreen;
+  bool onForgotPasswordScreen = false;
 
   @override
   void initState() {
@@ -45,11 +48,11 @@ class _LoginFormState extends State<LoginForm> {
     int observeState(FormzSubmissionStatus state) {
       switch (state) {
         case FormzSubmissionStatus.success:
-          return successfulLogin;
+          return successfulState;
         case FormzSubmissionStatus.failure:
-          return failureLogin;
+          return failureState;
         default:
-          return otherLoginState;
+          return otherState;
       }
     }
 
@@ -69,11 +72,20 @@ class _LoginFormState extends State<LoginForm> {
             _stateController.changeState(observeState(state.status));
           },
         ),
+        BlocListener<ForgotPasswordCubit, ForgotPasswordState>(
+          listener: (context, state) {
+            userForgotPasswordError =
+                state.email.isNotValid ? 'Invalid user' : '';
+            _stateController.changeState(observeState(state.status));
+          },
+        ),
       ],
       child: Builder(
         builder: (context) {
           final stateLogin = context.watch<LoginCubit>().state;
           final stateSignup = context.watch<SignUpCubit>().state;
+          final stateForgotPassword =
+              context.watch<ForgotPasswordCubit>().state;
 
           return FlutterLogin(
             logo: const AssetImage('assets/bloc_logo_small.png'),
@@ -83,7 +95,6 @@ class _LoginFormState extends State<LoginForm> {
             autoValidateModeForm: AutovalidateMode.onUserInteraction,
             loginProviders: [
               LoginProvider(
-                // icon: FontAwesomeIcons.google,
                 button: Buttons.googleDark,
                 label: 'Google',
                 callback: () async {
@@ -94,20 +105,12 @@ class _LoginFormState extends State<LoginForm> {
             onSwitchButton: () {
               if (currentScreen == loginScreen) {
                 currentScreen = signupScreen;
-                context
-                    .read<SignUpCubit>()
-                    .emailChanged(stateLogin.email.value);
-                context
-                    .read<SignUpCubit>()
-                    .passwordChanged(stateLogin.password.value);
+                context.read<SignUpCubit>().replaceUserInfo(
+                    stateLogin.email.value, stateLogin.password.value);
               } else {
                 currentScreen = loginScreen;
-                context
-                    .read<LoginCubit>()
-                    .emailChanged(stateSignup.email.value);
-                context
-                    .read<LoginCubit>()
-                    .passwordChanged(stateSignup.password.value);
+                context.read<LoginCubit>().replaceUserInfo(
+                    stateSignup.email.value, stateSignup.password.value);
               }
             },
             onChangedUserField: (user) {
@@ -128,7 +131,13 @@ class _LoginFormState extends State<LoginForm> {
               context.read<SignUpCubit>().confirmedPasswordChanged(password!);
             },
             userValidator: (_) {
-              return userError != '' ? userError ?? 'Empty email' : null;
+              if (!onForgotPasswordScreen) {
+                return userError != '' ? userError ?? 'Empty email' : null;
+              } else {
+                return userForgotPasswordError != ''
+                    ? userForgotPasswordError ?? 'Empty email'
+                    : null;
+              }
             },
             passwordValidator: (_) {
               return passwordError != ''
@@ -144,7 +153,38 @@ class _LoginFormState extends State<LoginForm> {
             onSubmitAnimationCompleted: () {
               context.read<AppBloc>().add(const AppAnimationFinished());
             },
-            onRecoverPassword: (user) => null,
+            onChangedRecoverUser: (value) {
+              context.read<ForgotPasswordCubit>().emailChanged(value!);
+            },
+            onForgotPasswordSwitch: () {
+              if (!onForgotPasswordScreen) {
+                onForgotPasswordScreen = true;
+                if (currentScreen == loginScreen) {
+                  context
+                      .read<ForgotPasswordCubit>()
+                      .emailChanged(stateLogin.email.value);
+                } else {
+                  context
+                      .read<ForgotPasswordCubit>()
+                      .emailChanged(stateSignup.email.value);
+                }
+              } else {
+                onForgotPasswordScreen = false;
+                if (currentScreen == loginScreen) {
+                  context
+                      .read<LoginCubit>()
+                      .emailChanged(stateForgotPassword.email.value);
+                } else {
+                  context
+                      .read<SignUpCubit>()
+                      .emailChanged(stateForgotPassword.email.value);
+                }
+              }
+            },
+            onRecoverPassword: (user) {
+              context.read<LoginCubit>().logInWithCredentials();
+              print(user);
+            },
           );
         },
       ),
