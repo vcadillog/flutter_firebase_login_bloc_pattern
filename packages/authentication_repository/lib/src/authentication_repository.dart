@@ -91,6 +91,10 @@ class LogInWithEmailAndPasswordFailure implements Exception {
         return const LogInWithEmailAndPasswordFailure(
           'Incorrect password, please try again.',
         );
+      case 'email-not-verified':
+        return const LogInWithEmailAndPasswordFailure(
+          'Email not verified, please try again after verifying your account.',
+        );
       default:
         return const LogInWithEmailAndPasswordFailure();
     }
@@ -155,6 +159,34 @@ class LogInWithGoogleFailure implements Exception {
   final String message;
 }
 
+class RecoverPasswordFailure implements Exception {
+  /// {@macro recover_password_failure}
+  const RecoverPasswordFailure([
+    this.message = 'An unknown error occurred.',
+  ]);
+
+  /// Create an authentication message
+  /// from a firebase authentication exception code.
+  factory RecoverPasswordFailure.fromCode(String code) {
+    switch (code) {
+      case 'invalid-email':
+        return const RecoverPasswordFailure(
+          'Email is not valid or badly formatted.',
+        );
+      case 'user-not-found':
+        return const RecoverPasswordFailure(
+          'User not found.',
+        );
+
+      default:
+        return const RecoverPasswordFailure();
+    }
+  }
+
+  /// The associated error message.
+  final String message;
+}
+
 /// Thrown during the logout process if a failure occurs.
 class LogOutFailure implements Exception {}
 
@@ -209,10 +241,12 @@ class AuthenticationRepository {
   /// Throws a [SignUpWithEmailAndPasswordFailure] if an exception occurs.
   Future<void> signUp({required String email, required String password}) async {
     try {
-      await _firebaseAuth.createUserWithEmailAndPassword(
+      // await _firebaseAuth.signInWithEmailLink(email: email, emailLink: emailLink)
+      final newUser = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+      newUser.user!.sendEmailVerification();
     } on firebase_auth.FirebaseAuthException catch (e) {
       throw SignUpWithEmailAndPasswordFailure.fromCode(e.code);
     } catch (_) {
@@ -249,6 +283,18 @@ class AuthenticationRepository {
     }
   }
 
+  Future<void> recoverPassword({
+    required String email,
+  }) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      throw RecoverPasswordFailure.fromCode(e.code);
+    } catch (_) {
+      throw const RecoverPasswordFailure();
+    }
+  }
+
   /// Signs in with the provided [email] and [password].
   ///
   /// Throws a [LogInWithEmailAndPasswordFailure] if an exception occurs.
@@ -256,15 +302,20 @@ class AuthenticationRepository {
     required String email,
     required String password,
   }) async {
+    final bool emailVerified;
     try {
-      await _firebaseAuth.signInWithEmailAndPassword(
+      final user = await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      emailVerified = !user.user!.emailVerified;
     } on firebase_auth.FirebaseAuthException catch (e) {
       throw LogInWithEmailAndPasswordFailure.fromCode(e.code);
     } catch (_) {
       throw const LogInWithEmailAndPasswordFailure();
+    }
+    if (emailVerified) {
+      throw LogInWithEmailAndPasswordFailure.fromCode('email-not-verified');
     }
   }
 

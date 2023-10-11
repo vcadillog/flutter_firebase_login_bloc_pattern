@@ -182,8 +182,7 @@ class _LoginFormState extends State<LoginForm> {
               }
             },
             onRecoverPassword: (user) {
-              context.read<LoginCubit>().logInWithCredentials();
-              print(user);
+              context.read<ForgotPasswordCubit>().recoverPassword();
             },
           );
         },

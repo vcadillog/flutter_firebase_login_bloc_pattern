@@ -21,4 +21,24 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
       ),
     );
   }
+
+  Future<void> recoverPassword() async {
+    if (!state.isValid) return;
+    emit(state.copyWith(status: FormzSubmissionStatus.inProgress));
+    try {
+      await _authenticationRepository.recoverPassword(
+        email: state.email.value,
+      );
+      emit(state.copyWith(status: FormzSubmissionStatus.success));
+    } on RecoverPasswordFailure catch (e) {
+      emit(
+        state.copyWith(
+          errorMessage: e.message,
+          status: FormzSubmissionStatus.failure,
+        ),
+      );
+    } catch (_) {
+      emit(state.copyWith(status: FormzSubmissionStatus.failure));
+    }
+  }
 }
